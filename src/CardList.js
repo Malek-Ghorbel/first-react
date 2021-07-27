@@ -2,6 +2,7 @@ import React from "react";
 import Card from "./Card";
 
 const CardList = ({robots}) => {
+   // throw new Error('noooo') ;
 
     const cardcomponent = robots.map( (user,i) => <Card key={robots[i].id} 
                                                         id={robots[i].id} 
