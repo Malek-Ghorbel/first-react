@@ -5,15 +5,27 @@ import "./app.css" ;
 import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
 
+function debounce(fn, delay) {
+    let timer;
+    return (...args) => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fn(...args), delay);
+    };
+}
+
 class App extends Component {
     constructor () {
         super() ;
         this.state = {
             robots : [],
             searchfield :'',
+            debouncedSearchfield :'',
             isLoading: true,
             error: null
         }
+        this.debouncedSetSearch = debounce((val) => {
+            this.setState({ debouncedSearchfield: val });
+        }, 300);
     }
 
     fetchRobots = () => {
@@ -34,12 +46,18 @@ class App extends Component {
     }
 
     onSearchChange = (event) => {
-        this.setState({searchfield : event.target.value }) ;
+        const val = event.target.value;
+        this.setState({ searchfield: val });
+        this.debouncedSetSearch(val);
+    }
+
+    onClearSearch = () => {
+        this.setState({ searchfield: '', debouncedSearchfield: '' });
     }
 
     render () {
         const filteredRobots = this.state.robots.filter( robot => {
-            return(robot.name.toLowerCase().includes(this.state.searchfield.toLowerCase())  )
+            return(robot.name.toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
         if (this.state.error) {
             return (
@@ -57,16 +75,24 @@ class App extends Component {
             return (
                 <div className="tc">
                     <h1 className="f1">ROBOFRIENDS</h1>
-                    <SearchBox searchChange={this.onSearchChange} />
+                    <SearchBox
+                    value={this.state.searchfield}
+                    searchChange={this.onSearchChange}
+                    onClear={this.onClearSearch}
+                    />
                     <p className="f4 gray" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
-                    <button className="pa2 mt2 br2 bg-blue white bn pointer" onClick={() => this.setState({ searchfield: '' })}>Clear search</button>
+                    <button className="pa2 mt2 br2 bg-blue white bn pointer" onClick={this.onClearSearch}>Clear search</button>
                 </div>
             );
         }
         return (
             <div className="tc">
                 <h1 className="f1">ROBOFRIENDS</h1>
-                <SearchBox searchChange={this.onSearchChange} />
+                <SearchBox
+                value={this.state.searchfield}
+                searchChange={this.onSearchChange}
+                onClear={this.onClearSearch}
+                />
                 <Scroll>
                     <ErrorBoundry>
                         <CardList robots={filteredRobots} />
