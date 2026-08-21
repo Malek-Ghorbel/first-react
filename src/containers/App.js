@@ -21,9 +21,13 @@ class App extends Component {
             robots : [],
             searchfield :'',
             debouncedSearchfield :'',
+            selectedRobot: null,
             isLoading: true,
             error: null,
-            selectedRobot: null
+            sortBy: 'name',
+            sortDir: 'asc',
+            page: 1,
+            pageSize: 6
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
