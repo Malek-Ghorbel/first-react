@@ -12,7 +12,7 @@ describe('Card', () => {
   it('renders the robohash image with correct URL', () => {
     render(<Card id={1} name="Leanne Graham" email="leanne@example.com" />);
     const img = screen.getByRole('img');
-    expect(img).toHaveAttribute('src', 'https://robohash.org/1?50x50');
+    expect(img).toHaveAttribute('src', 'https://robohash.org/1?size=200x200');
   });
 
   it('displays name and email', () => {
