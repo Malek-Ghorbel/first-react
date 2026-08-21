@@ -10,3 +10,8 @@ h1 {
     font-weight: 200;
     font-family: 'SEGA LOGO FONT';
 }
+
+.focus-outline:focus {
+    outline: 2px solid #357edd;
+    outline-offset: 2px;
+}

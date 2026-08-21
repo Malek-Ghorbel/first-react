@@ -1,6 +1,7 @@
 import React , {Component} from "react";
 import CardList from "../components/CardList";
 import SearchBox from "../components/SearchBox";
+import RobotModal from "../components/RobotModal";
 import "./app.css" ;
 import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
@@ -21,11 +22,20 @@ class App extends Component {
             searchfield :'',
             debouncedSearchfield :'',
             isLoading: true,
-            error: null
+            error: null,
+            selectedRobot: null
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
         }, 300);
+    }
+
+    onSelectRobot = (robot) => {
+        this.setState({ selectedRobot: robot });
+    }
+
+    onCloseModal = () => {
+        this.setState({ selectedRobot: null });
     }
 
     fetchRobots = () => {
@@ -95,9 +105,12 @@ class App extends Component {
                 />
                 <Scroll>
                     <ErrorBoundry>
-                        <CardList robots={filteredRobots} />
+                        <CardList robots={filteredRobots} onSelect={this.onSelectRobot} />
                     </ErrorBoundry>
                 </Scroll>
+                {this.state.selectedRobot && (
+                    <RobotModal robot={this.state.selectedRobot} onClose={this.onCloseModal} />
+                )}
             </div>
         );
     }
