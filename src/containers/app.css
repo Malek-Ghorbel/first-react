@@ -11,7 +11,7 @@ h1 {
     font-family: 'SEGA LOGO FONT';
 }
 
-.card-focus:focus {
+.focus-outline:focus {
     outline: 2px solid #357edd;
     outline-offset: 2px;
 }

@@ -5,7 +5,6 @@ import RobotModal from "../components/RobotModal";
 import "./app.css" ;
 import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
-import RobotModal from "../components/RobotModal";
 
 function debounce(fn, delay) {
     let timer;
@@ -65,9 +64,6 @@ class App extends Component {
     onClearSearch = () => {
         this.setState({ searchfield: '', debouncedSearchfield: '' });
     }
-
-    onSelectRobot = (robot) => this.setState({ selectedRobot: robot });
-    onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
         const filteredRobots = this.state.robots.filter( robot => {
