@@ -1,6 +1,6 @@
 import React from 'react' ;
 
-const Card = ({id, name, email, onSelect}) => {
+const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -14,8 +14,19 @@ const Card = ({id, name, email, onSelect}) => {
             aria-label={`View details for ${name}`}
             onClick={onSelect}
             onKeyDown={handleKeyDown}
-            className="bg-light-green dib br3 ma2 grow shadow-5 pointer"
+            className="bg-light-green dib br3 ma2 grow shadow-5 pointer relative"
         >
+            {onToggleFavorite && (
+                <button
+                    aria-label={isFavorite ? `Remove ${name} from favorites` : `Add ${name} to favorites`}
+                    aria-pressed={isFavorite}
+                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(id); }}
+                    className="absolute top-0 right-0 ma2 bg-white br-100 ba b--black-10 pointer"
+                    title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
+                >
+                    {isFavorite ? '★' : '☆'}
+                </button>
+            )}
             <img alt={`Robot avatar for ${name}`} src={`https://robohash.org/${id}?size=200x200`} />
             <div>
                 <h2> {name} </h2> 

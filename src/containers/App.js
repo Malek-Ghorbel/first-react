@@ -6,6 +6,8 @@ import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
 import RobotModal from "../components/RobotModal";
 
+const FAV_KEY = 'robofriends:favorites';
+
 function debounce(fn, delay) {
     let timer;
     return (...args) => {
@@ -23,7 +25,9 @@ class App extends Component {
             debouncedSearchfield :'',
             isLoading: true,
             error: null,
-            selectedRobot: null
+            selectedRobot: null,
+            favorites: [],
+            showFavoritesOnly: false
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
@@ -44,8 +48,37 @@ class App extends Component {
     }
 
     componentDidMount () {
+        try {
+            const raw = localStorage.getItem(FAV_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    this.setState({ favorites: parsed });
+                }
+            }
+        } catch {}
         this.fetchRobots();
     }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.favorites !== this.state.favorites) {
+            try {
+                localStorage.setItem(FAV_KEY, JSON.stringify(this.state.favorites));
+            } catch {}
+        }
+    }
+
+    toggleFavorite = (id) => {
+        this.setState(prev => ({
+            favorites: prev.favorites.includes(id)
+                ? prev.favorites.filter(x => x !== id)
+                : [...prev.favorites, id]
+        }));
+    };
+
+    toggleFavoritesFilter = () => {
+        this.setState(prev => ({ showFavoritesOnly: !prev.showFavoritesOnly }));
+    };
 
     onSearchChange = (event) => {
         const val = event.target.value;
@@ -61,9 +94,14 @@ class App extends Component {
     onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
-        const filteredRobots = this.state.robots.filter( robot => {
-            return(robot.name.toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
+        const { robots, debouncedSearchfield, searchfield, favorites, showFavoritesOnly } = this.state;
+        const searched = robots.filter( robot => {
+            return(robot.name.toLowerCase().includes(debouncedSearchfield.toLowerCase())  )
         }) ;
+        const filteredRobots = showFavoritesOnly
+            ? searched.filter(r => favorites.includes(r.id))
+            : searched;
+
         if (this.state.error) {
             return (
                 <div className="tc" role="alert" aria-live="polite">
@@ -76,6 +114,33 @@ class App extends Component {
         if (this.state.isLoading) {
             return (<h1 aria-live="polite">loading ...</h1>)
         }
+
+        const toolbar = (
+            <div className="flex justify-center items-center gap2 mv2">
+                <button
+                    className={showFavoritesOnly ? 'b--green bg-light-green pa2 ba pointer br2' : 'b--black-20 pa2 ba pointer br2 bg-white'}
+                    onClick={this.toggleFavoritesFilter}
+                    aria-pressed={showFavoritesOnly}
+                >
+                    {showFavoritesOnly ? 'Showing favorites' : 'Show favorites'} ({favorites.length})
+                </button>
+            </div>
+        );
+
+        if (showFavoritesOnly && favorites.length === 0) {
+            return (
+                <div className="tc">
+                    <h1 className="f1">ROBOFRIENDS</h1>
+                    <SearchBox
+                    value={this.state.searchfield}
+                    searchChange={this.onSearchChange}
+                    onClear={this.onClearSearch}
+                    />
+                    {toolbar}
+                    <p className="f4 gray">No favorites yet — tap ☆ on a card to save one.</p>
+                </div>
+            );
+        }
         if (!filteredRobots.length) {
             return (
                 <div className="tc">
@@ -85,6 +150,7 @@ class App extends Component {
                     searchChange={this.onSearchChange}
                     onClear={this.onClearSearch}
                     />
+                    {toolbar}
                     <p className="f4 gray" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
                     <button className="pa2 mt2 br2 bg-blue white bn pointer" onClick={this.onClearSearch}>Clear search</button>
                 </div>
@@ -98,9 +164,10 @@ class App extends Component {
                 searchChange={this.onSearchChange}
                 onClear={this.onClearSearch}
                 />
+                {toolbar}
                 <Scroll>
                     <ErrorBoundry>
-                        <CardList robots={filteredRobots} onSelect={this.onSelectRobot} />
+                        <CardList robots={filteredRobots} favorites={favorites} onToggleFavorite={this.toggleFavorite} onSelect={this.onSelectRobot} />
                     </ErrorBoundry>
                 </Scroll>
                 {this.state.selectedRobot && (
