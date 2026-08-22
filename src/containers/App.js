@@ -6,6 +6,8 @@ import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
 import RobotModal from "../components/RobotModal";
 
+const FAV_KEY = 'robofriends:favorites';
+
 function debounce(fn, delay) {
     let timer;
     return (...args) => {
@@ -27,7 +29,9 @@ class App extends Component {
             sortDir: 'asc',
             page: 1,
             pageSize: 6,
-            selectedRobot: null
+            selectedRobot: null,
+            favorites: [],
+            showFavoritesOnly: false
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
@@ -48,8 +52,37 @@ class App extends Component {
     }
 
     componentDidMount () {
+        try {
+            const raw = localStorage.getItem(FAV_KEY);
+            if (raw) {
+                const parsed = JSON.parse(raw);
+                if (Array.isArray(parsed)) {
+                    this.setState({ favorites: parsed });
+                }
+            }
+        } catch {}
         this.fetchRobots();
     }
+
+    componentDidUpdate(prevProps, prevState) {
+        if (prevState.favorites !== this.state.favorites) {
+            try {
+                localStorage.setItem(FAV_KEY, JSON.stringify(this.state.favorites));
+            } catch {}
+        }
+    }
+
+    toggleFavorite = (id) => {
+        this.setState(prev => ({
+            favorites: prev.favorites.includes(id)
+                ? prev.favorites.filter(x => x !== id)
+                : [...prev.favorites, id]
+        }));
+    };
+
+    toggleFavoritesFilter = () => {
+        this.setState(prev => ({ showFavoritesOnly: !prev.showFavoritesOnly, page: 1 }));
+    };
 
     onSearchChange = (event) => {
         const val = event.target.value;
@@ -74,10 +107,13 @@ class App extends Component {
     onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
-        const { sortBy, sortDir, page: currentPage, pageSize } = this.state;
-        const filteredRobots = this.state.robots.filter( robot => {
+        const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly } = this.state;
+        const searched = this.state.robots.filter( robot => {
             return(robot.name.toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
+        const filteredRobots = showFavoritesOnly
+            ? searched.filter(r => favorites.includes(r.id))
+            : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
             const aVal = (a[sortBy] || '').toLowerCase();
             const bVal = (b[sortBy] || '').toLowerCase();
@@ -101,6 +137,51 @@ class App extends Component {
         if (this.state.isLoading) {
             return (<h1 aria-live="polite">loading ...</h1>)
         }
+
+        const favToolbar = (
+            <div className="flex justify-center items-center gap2 mv2">
+                <button
+                    className={showFavoritesOnly ? 'b--green bg-light-green pa2 ba pointer br2' : 'b--black-20 pa2 ba pointer br2 bg-white'}
+                    onClick={this.toggleFavoritesFilter}
+                    aria-pressed={showFavoritesOnly}
+                >
+                    {showFavoritesOnly ? 'Showing favorites' : 'Show favorites'} ({favorites.length})
+                </button>
+            </div>
+        );
+
+        const sortToolbar = (
+            <div className="flex flex-wrap justify-center items-center gap2 mv2">
+                <label htmlFor="sort-select" className="mr2">Sort by</label>
+                <select
+                    id="sort-select"
+                    value={`${sortBy}:${sortDir}`}
+                    onChange={this.onSortChange}
+                    className="pa2 ba b--green bg-white"
+                >
+                    <option value="name:asc">Name A→Z</option>
+                    <option value="name:desc">Name Z→A</option>
+                    <option value="email:asc">Email A→Z</option>
+                    <option value="email:desc">Email Z→A</option>
+                </select>
+            </div>
+        );
+
+        if (showFavoritesOnly && favorites.length === 0) {
+            return (
+                <div className="tc">
+                    <h1 className="f1">ROBOFRIENDS</h1>
+                    <SearchBox
+                    value={this.state.searchfield}
+                    searchChange={this.onSearchChange}
+                    onClear={this.onClearSearch}
+                    />
+                    {favToolbar}
+                    {sortToolbar}
+                    <p className="f4 gray">No favorites yet — tap ☆ on a card to save one.</p>
+                </div>
+            );
+        }
         if (!filteredRobots.length) {
             return (
                 <div className="tc">
@@ -110,6 +191,8 @@ class App extends Component {
                     searchChange={this.onSearchChange}
                     onClear={this.onClearSearch}
                     />
+                    {favToolbar}
+                    {sortToolbar}
                     <p className="f4 gray" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
                     <button className="pa2 mt2 br2 bg-blue white bn pointer" onClick={this.onClearSearch}>Clear search</button>
                 </div>
@@ -123,23 +206,11 @@ class App extends Component {
                 searchChange={this.onSearchChange}
                 onClear={this.onClearSearch}
                 />
-                <div className="flex flex-wrap justify-center items-center gap2 mv2">
-                    <label htmlFor="sort-select" className="mr2">Sort by</label>
-                    <select
-                        id="sort-select"
-                        value={`${sortBy}:${sortDir}`}
-                        onChange={this.onSortChange}
-                        className="pa2 ba b--green bg-white"
-                    >
-                        <option value="name:asc">Name A→Z</option>
-                        <option value="name:desc">Name Z→A</option>
-                        <option value="email:asc">Email A→Z</option>
-                        <option value="email:desc">Email Z→A</option>
-                    </select>
-                </div>
+                {favToolbar}
+                {sortToolbar}
                 <Scroll>
                     <ErrorBoundry>
-                        <CardList robots={pagedRobots} onSelect={this.onSelectRobot} />
+                        <CardList robots={pagedRobots} favorites={favorites} onToggleFavorite={this.toggleFavorite} onSelect={this.onSelectRobot} />
                     </ErrorBoundry>
                 </Scroll>
                 <div className="flex justify-center items-center gap3 mv3">
