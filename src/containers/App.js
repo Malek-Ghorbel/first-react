@@ -4,6 +4,7 @@ import SearchBox from "../components/SearchBox";
 import "./app.css" ;
 import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
+import RobotModal from "../components/RobotModal";
 
 function debounce(fn, delay) {
     let timer;
@@ -21,7 +22,8 @@ class App extends Component {
             searchfield :'',
             debouncedSearchfield :'',
             isLoading: true,
-            error: null
+            error: null,
+            selectedRobot: null
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
@@ -54,6 +56,9 @@ class App extends Component {
     onClearSearch = () => {
         this.setState({ searchfield: '', debouncedSearchfield: '' });
     }
+
+    onSelectRobot = (robot) => this.setState({ selectedRobot: robot });
+    onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
         const filteredRobots = this.state.robots.filter( robot => {
@@ -95,9 +100,12 @@ class App extends Component {
                 />
                 <Scroll>
                     <ErrorBoundry>
-                        <CardList robots={filteredRobots} />
+                        <CardList robots={filteredRobots} onSelect={this.onSelectRobot} />
                     </ErrorBoundry>
                 </Scroll>
+                {this.state.selectedRobot && (
+                    <RobotModal robot={this.state.selectedRobot} onClose={this.onCloseModal} />
+                )}
             </div>
         );
     }
