@@ -21,7 +21,11 @@ class App extends Component {
             searchfield :'',
             debouncedSearchfield :'',
             isLoading: true,
-            error: null
+            error: null,
+            sortBy: 'name',
+            sortDir: 'asc',
+            page: 1,
+            pageSize: 6
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
@@ -47,18 +51,39 @@ class App extends Component {
 
     onSearchChange = (event) => {
         const val = event.target.value;
-        this.setState({ searchfield: val });
+        this.setState({ searchfield: val, page: 1 });
         this.debouncedSetSearch(val);
     }
 
     onClearSearch = () => {
-        this.setState({ searchfield: '', debouncedSearchfield: '' });
+        this.setState({ searchfield: '', debouncedSearchfield: '', page: 1 });
+    }
+
+    onSortChange = (e) => {
+        const [sortBy, sortDir] = e.target.value.split(':');
+        this.setState({ sortBy, sortDir, page: 1 });
+    }
+
+    goToPage = (nextPage) => {
+        this.setState({ page: nextPage });
     }
 
     render () {
+        const { sortBy, sortDir, page: currentPage, pageSize } = this.state;
         const filteredRobots = this.state.robots.filter( robot => {
             return(robot.name.toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
+        const sorted = [...filteredRobots].sort((a, b) => {
+            const aVal = (a[sortBy] || '').toLowerCase();
+            const bVal = (b[sortBy] || '').toLowerCase();
+            if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
+            if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+            return 0;
+        });
+        const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
+        const page = Math.min(currentPage, totalPages);
+        const start = (page - 1) * pageSize;
+        const pagedRobots = sorted.slice(start, start + pageSize);
         if (this.state.error) {
             return (
                 <div className="tc" role="alert" aria-live="polite">
@@ -93,11 +118,30 @@ class App extends Component {
                 searchChange={this.onSearchChange}
                 onClear={this.onClearSearch}
                 />
+                <div className="flex flex-wrap justify-center items-center gap2 mv2">
+                    <label htmlFor="sort-select" className="mr2">Sort by</label>
+                    <select
+                        id="sort-select"
+                        value={`${sortBy}:${sortDir}`}
+                        onChange={this.onSortChange}
+                        className="pa2 ba b--green bg-white"
+                    >
+                        <option value="name:asc">Name A→Z</option>
+                        <option value="name:desc">Name Z→A</option>
+                        <option value="email:asc">Email A→Z</option>
+                        <option value="email:desc">Email Z→A</option>
+                    </select>
+                </div>
                 <Scroll>
                     <ErrorBoundry>
-                        <CardList robots={filteredRobots} />
+                        <CardList robots={pagedRobots} />
                     </ErrorBoundry>
                 </Scroll>
+                <div className="flex justify-center items-center gap3 mv3">
+                    <button onClick={() => this.goToPage(page - 1)} disabled={page === 1} aria-label="Previous page" className="pa2 br2 bg-light-green ba b--green pointer">Prev</button>
+                    <span aria-live="polite" className="mh2">Page {page} of {totalPages}</span>
+                    <button onClick={() => this.goToPage(page + 1)} disabled={page === totalPages} aria-label="Next page" className="pa2 br2 bg-light-green ba b--green pointer">Next</button>
+                </div>
             </div>
         );
     }
