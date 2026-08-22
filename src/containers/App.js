@@ -4,6 +4,7 @@ import SearchBox from "../components/SearchBox";
 import "./app.css" ;
 import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
+import RobotModal from "../components/RobotModal";
 
 function debounce(fn, delay) {
     let timer;
@@ -25,7 +26,8 @@ class App extends Component {
             sortBy: 'name',
             sortDir: 'asc',
             page: 1,
-            pageSize: 6
+            pageSize: 6,
+            selectedRobot: null
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
@@ -67,6 +69,9 @@ class App extends Component {
     goToPage = (nextPage) => {
         this.setState({ page: nextPage });
     }
+
+    onSelectRobot = (robot) => this.setState({ selectedRobot: robot });
+    onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
         const { sortBy, sortDir, page: currentPage, pageSize } = this.state;
@@ -134,7 +139,7 @@ class App extends Component {
                 </div>
                 <Scroll>
                     <ErrorBoundry>
-                        <CardList robots={pagedRobots} />
+                        <CardList robots={pagedRobots} onSelect={this.onSelectRobot} />
                     </ErrorBoundry>
                 </Scroll>
                 <div className="flex justify-center items-center gap3 mv3">
@@ -142,6 +147,9 @@ class App extends Component {
                     <span aria-live="polite" className="mh2">Page {page} of {totalPages}</span>
                     <button onClick={() => this.goToPage(page + 1)} disabled={page === totalPages} aria-label="Next page" className="pa2 br2 bg-light-green ba b--green pointer">Next</button>
                 </div>
+                {this.state.selectedRobot && (
+                    <RobotModal robot={this.state.selectedRobot} onClose={this.onCloseModal} />
+                )}
             </div>
         );
     }
