@@ -1,6 +1,10 @@
 import React from 'react' ;
 
 const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
+    const ref = React.useRef(null);
+    React.useEffect(() => {
+        const el = ref.current; if (!el) return; const obs = new IntersectionObserver((entries) => { entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } }); }, { threshold: 0.1 }); obs.observe(el); return () => obs.disconnect();
+    }, []);
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
@@ -9,12 +13,13 @@ const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
     };
     return (
         <div
+            ref={ref}
             role="button"
             tabIndex={0}
             aria-label={`View details for ${name}`}
             onClick={onSelect}
             onKeyDown={handleKeyDown}
-            className="bg-light-green dib br3 ma2 grow shadow-5 pointer relative"
+            className="bg-light-green dib br3 ma2 grow shadow-5 pointer relative hover-lift card-animate"
         >
             {onToggleFavorite && (
                 <button
