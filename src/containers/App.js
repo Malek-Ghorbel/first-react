@@ -136,11 +136,14 @@ class App extends Component {
     };
 
     toggleFavorite = (id) => {
-        this.setState(prev => ({
-            favorites: prev.favorites.includes(id)
-                ? prev.favorites.filter(x => x !== id)
-                : [...prev.favorites, id]
-        }));
+        this.setState(prev => {
+            const favs = Array.isArray(prev.favorites) ? prev.favorites : [];
+            return {
+                favorites: favs.includes(id)
+                    ? favs.filter(x => x !== id)
+                    : [...favs, id]
+            };
+        });
     };
 
     toggleFavoritesFilter = () => {
@@ -171,17 +174,18 @@ class App extends Component {
 
     render () {
         const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
-        // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays)
+        // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays, non-string values)
         const sanitizedRobots = Array.isArray(this.state.robots) ? this.state.robots.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
+        const debouncedSearch = String(this.state.debouncedSearchfield || '');
         const searched = sanitizedRobots.filter( robot => {
-            return((robot.name || '').toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
+            return(String(robot.name || '').toLowerCase().includes(debouncedSearch.toLowerCase())  )
         }) ;
         const filteredRobots = showFavoritesOnly
             ? searched.filter(r => r != null && Array.isArray(favorites) && favorites.includes(r.id))
             : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
-            const aVal = (a[sortBy] || '').toLowerCase();
-            const bVal = (b[sortBy] || '').toLowerCase();
+            const aVal = String(a[sortBy] || '').toLowerCase();
+            const bVal = String(b[sortBy] || '').toLowerCase();
             if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
             if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
             return 0;
