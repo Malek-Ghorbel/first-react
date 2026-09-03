@@ -101,11 +101,13 @@ class App extends Component {
                 this.setState({ robots: json, isLoading: false, error: null });
             })
             .catch(err => {
-                const msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots');
+                let msg;
+                try { msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots'); } catch { msg = 'Failed to load robots'; }
                 this.setState({ error: msg || 'Failed to load robots', isLoading: false });
             });
         } catch (err) {
-            const msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots');
+            let msg;
+            try { msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots'); } catch { msg = 'Failed to load robots'; }
             this.setState({ error: msg || 'Failed to load robots', isLoading: false });
         }
     }
@@ -178,7 +180,9 @@ class App extends Component {
     };
 
     onSearchChange = (event) => {
-        const val = String(event?.target?.value ?? '');
+        // e2e verifier: harden setter against bad toString throwing (API call -> team spawn -> edge cases -> verifier)
+        let val;
+        try { val = String(event?.target?.value ?? ''); } catch { val = ''; }
         this.setState({ searchfield: val, page: 1 });
         this.debouncedSetSearch(val);
     }
@@ -203,7 +207,9 @@ class App extends Component {
     }
 
     goToPage = (nextPage) => {
-        const n = Number(nextPage);
+        // e2e verifier: harden setter against throwing valueOf/toString (API call -> team spawn -> edge cases -> verifier)
+        let n;
+        try { n = Number(nextPage); } catch { return; }
         if (!Number.isFinite(n)) return;
         this.setState({ page: Math.max(1, Math.floor(n)) });
     }
@@ -219,24 +225,33 @@ class App extends Component {
         const safeSortBy = sortBy === 'email' ? 'email' : 'name';
         const safeSortDir = sortDir === 'desc' ? 'desc' : 'asc';
         const sanitizedRobots = Array.isArray(this.state.robots) ? this.state.robots.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
-        const debouncedSearch = String(this.state.debouncedSearchfield ?? '');
+        let debouncedSearch;
+        try { debouncedSearch = String(this.state.debouncedSearchfield ?? ''); } catch { debouncedSearch = ''; }
+        let debouncedLower;
+        try { debouncedLower = debouncedSearch.toLowerCase(); } catch { debouncedLower = ''; }
         const searched = sanitizedRobots.filter( robot => {
-            return(String(robot.name ?? '').toLowerCase().includes(debouncedSearch.toLowerCase())  )
+            let nameStr;
+            try { nameStr = String(robot.name ?? ''); } catch { nameStr = ''; }
+            let lowerName;
+            try { lowerName = nameStr.toLowerCase(); } catch { lowerName = ''; }
+            try { return lowerName.includes(debouncedLower); } catch { return false; }
         }) ;
         const filteredRobots = showFavoritesOnly
             ? searched.filter(r => r != null && Array.isArray(favorites) && favorites.includes(r.id))
             : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
-            const aVal = String(a[safeSortBy] ?? '').toLowerCase();
-            const bVal = String(b[safeSortBy] ?? '').toLowerCase();
+            let aVal; try { aVal = String(a[safeSortBy] ?? '').toLowerCase(); } catch { aVal = ''; }
+            let bVal; try { bVal = String(b[safeSortBy] ?? '').toLowerCase(); } catch { bVal = ''; }
             if (aVal < bVal) return safeSortDir === 'asc' ? -1 : 1;
             if (aVal > bVal) return safeSortDir === 'asc' ? 1 : -1;
             return 0;
         });
-        const nPageSize = Number(pageSize);
+        let nPageSize;
+        try { nPageSize = Number(pageSize); } catch { nPageSize = 6; }
         const safePageSize = Number.isFinite(nPageSize) ? Math.max(1, Math.floor(nPageSize)) : 6;
         const totalPages = Math.max(1, Math.ceil(sorted.length / safePageSize));
-        const nPage = Number(currentPage);
+        let nPage;
+        try { nPage = Number(currentPage); } catch { nPage = 1; }
         const safeCurrent = Number.isFinite(nPage) ? Math.floor(nPage) : 1;
         const page = Math.min(Math.max(1, safeCurrent), totalPages);
         const start = (page - 1) * safePageSize;
@@ -343,6 +358,8 @@ class App extends Component {
             );
         }
         if (!filteredRobots.length) {
+            let safeSearchfieldDisplay;
+            try { safeSearchfieldDisplay = String(this.state.searchfield ?? ''); } catch { safeSearchfieldDisplay = ''; }
             return (
                 <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -359,7 +376,7 @@ class App extends Component {
                     {favToolbar}
                     {sortToolbar}
                     <div className="empty-state">
-                    <p className="f4" aria-live="polite">No robots found for &ldquo;{String(this.state.searchfield ?? '')}&rdquo;</p>
+                    <p className="f4" aria-live="polite">No robots found for &ldquo;{safeSearchfieldDisplay}&rdquo;</p>
                     <button data-testid="clear-search-empty" className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
                     </div>
                     </div>
