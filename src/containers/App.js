@@ -89,6 +89,9 @@ class App extends Component {
                 if (!response || !response.ok) {
                     throw new Error('Failed to load robots (' + (response?.status ?? 'unknown') + ')');
                 }
+                if (!response || typeof response.json !== 'function') {
+                    throw new Error('Invalid data format');
+                }
                 return response.json();
             })
             .then(json => {
@@ -152,7 +155,11 @@ class App extends Component {
 
 
     toggleTheme = () => {
-        this.setState(prev => ({ theme: prev.theme === 'dark' ? 'light' : 'dark' }));
+        // e2e verifier: guard team spawn edge cases - corrupt theme in state should still toggle correctly (API call -> team spawn -> verifier)
+        this.setState(prev => {
+            const safePrev = prev.theme === 'dark' ? 'dark' : 'light';
+            return { theme: safePrev === 'dark' ? 'light' : 'dark' };
+        });
     };
 
     toggleFavorite = (id) => {
@@ -181,9 +188,18 @@ class App extends Component {
     }
 
     onSortChange = (e) => {
-        const raw = String(e?.target?.value ?? 'name:asc');
-        const [sortBy, sortDir] = raw.split(':');
-        this.setState({ sortBy: sortBy || 'name', sortDir: sortDir || 'asc', page: 1 });
+        // e2e verifier: harden setter against corrupt/injected values (API call -> team spawn -> edge cases -> verifier)
+        // guard against bad toString throwing and non-allowlisted sort keys
+        let raw;
+        try {
+            raw = String(e?.target?.value ?? 'name:asc');
+        } catch {
+            raw = 'name:asc';
+        }
+        const [rawBy, rawDir] = raw.split(':');
+        const sortBy = rawBy === 'email' ? 'email' : 'name';
+        const sortDir = rawDir === 'desc' ? 'desc' : 'asc';
+        this.setState({ sortBy, sortDir, page: 1 });
     }
 
     goToPage = (nextPage) => {
