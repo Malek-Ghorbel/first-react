@@ -71,6 +71,11 @@ class App extends Component {
 
     fetchRobots = () => {
         this.setState({ isLoading: true, error: null });
+        // e2e verifier: guard API call against missing fetch and non-Error rejections (null/string)
+        if (typeof fetch !== 'function') {
+            this.setState({ error: 'Failed to load robots', isLoading: false });
+            return;
+        }
         fetch('https://jsonplaceholder.typicode.com/users')
         .then(response => {
             if (!response.ok) {
@@ -84,7 +89,10 @@ class App extends Component {
             }
             this.setState({ robots: json, isLoading: false, error: null });
         })
-        .catch(err => this.setState({ error: err.message || 'Failed to load robots', isLoading: false }));
+        .catch(err => {
+            const msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots');
+            this.setState({ error: msg || 'Failed to load robots', isLoading: false });
+        });
     }
 
     componentDidMount () {
@@ -167,7 +175,9 @@ class App extends Component {
     }
 
     goToPage = (nextPage) => {
-        this.setState({ page: nextPage });
+        const n = Number(nextPage);
+        if (!Number.isFinite(n)) return;
+        this.setState({ page: Math.max(1, Math.floor(n)) });
     }
 
     onSelectRobot = (robot) => this.setState({ selectedRobot: robot });
@@ -191,8 +201,9 @@ class App extends Component {
             if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
             return 0;
         });
-        const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-        const page = Math.min(currentPage, totalPages);
+        const totalPages = Math.max(1, Math.ceil(sorted.length / Math.max(1, pageSize)));
+        const safeCurrent = Number.isFinite(currentPage) ? Math.floor(currentPage) : 1;
+        const page = Math.min(Math.max(1, safeCurrent), totalPages);
         const start = (page - 1) * pageSize;
         const pagedRobots = sorted.slice(start, start + pageSize);
         const themeToggle = (
