@@ -21,3 +21,16 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+# secrets — never commit tokens or private keys
+.secrets/
+.secrets
+*.pem
+.env
+.env.*
+!.env.example
+
+# syntaro task artifacts — local only, never commit
+prompt.md
+direct.log
+result.json
+omp-*.log
