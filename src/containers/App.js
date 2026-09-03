@@ -198,6 +198,10 @@ class App extends Component {
     render () {
         const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
         // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays, non-string values)
+        // + guard team spawn edge cases - corrupt theme/sort should not leak to verifier (API call -> team spawn -> verifier)
+        const safeTheme = theme === 'dark' ? 'dark' : 'light';
+        const safeSortBy = sortBy === 'email' ? 'email' : 'name';
+        const safeSortDir = sortDir === 'desc' ? 'desc' : 'asc';
         const sanitizedRobots = Array.isArray(this.state.robots) ? this.state.robots.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
         const debouncedSearch = String(this.state.debouncedSearchfield ?? '');
         const searched = sanitizedRobots.filter( robot => {
@@ -207,10 +211,10 @@ class App extends Component {
             ? searched.filter(r => r != null && Array.isArray(favorites) && favorites.includes(r.id))
             : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
-            const aVal = String(a[sortBy] ?? '').toLowerCase();
-            const bVal = String(b[sortBy] ?? '').toLowerCase();
-            if (aVal < bVal) return sortDir === 'asc' ? -1 : 1;
-            if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
+            const aVal = String(a[safeSortBy] ?? '').toLowerCase();
+            const bVal = String(b[safeSortBy] ?? '').toLowerCase();
+            if (aVal < bVal) return safeSortDir === 'asc' ? -1 : 1;
+            if (aVal > bVal) return safeSortDir === 'asc' ? 1 : -1;
             return 0;
         });
         const nPageSize = Number(pageSize);
@@ -223,20 +227,20 @@ class App extends Component {
         const pagedRobots = sorted.slice(start, start + safePageSize);
         const themeToggle = (
             <button
-                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                aria-label={`Switch to ${safeTheme === 'dark' ? 'light' : 'dark'} mode`}
                 data-testid="theme-toggle"
                 onClick={this.toggleTheme}
                 className="pa2 br2 ba b--green bg-white pointer"
-                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                title={`Switch to ${safeTheme === 'dark' ? 'light' : 'dark'} mode`}
                 style={{minWidth:'80px'}}
             >
-                {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+                {safeTheme === 'dark' ? '☀️ Light' : '🌙 Dark'}
             </button>
         );
 
         if (this.state.error) {
             return (
-                <div className={`app-root tc theme-${theme}`} data-theme={theme} role="alert" aria-live="polite">
+                <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme} role="alert" aria-live="polite">
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
                         {themeToggle}
@@ -250,7 +254,7 @@ class App extends Component {
         }
         if (this.state.isLoading) {
             return (
-                <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
                         {themeToggle}
@@ -285,10 +289,10 @@ class App extends Component {
 
         const sortToolbar = (
             <div className="toolbar">
-                <label htmlFor="sort-select" className="mr2" style={{color: theme === 'dark' ? '#e2e8f0' : '#0f172a', fontWeight:600}}>Sort by</label>
+                <label htmlFor="sort-select" className="mr2" style={{color: safeTheme === 'dark' ? '#e2e8f0' : '#0f172a', fontWeight:600}}>Sort by</label>
                 <select
                     id="sort-select"
-                    value={`${sortBy}:${sortDir}`}
+                    value={`${safeSortBy}:${safeSortDir}`}
                     onChange={this.onSortChange}
                     className="pa2 ba b--green bg-white sort-select"
                 >
@@ -302,7 +306,7 @@ class App extends Component {
 
         if (showFavoritesOnly && favoritesCount === 0) {
             return (
-                <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
                         {themeToggle}
@@ -324,7 +328,7 @@ class App extends Component {
         }
         if (!filteredRobots.length) {
             return (
-                <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
                         {themeToggle}
@@ -347,7 +351,7 @@ class App extends Component {
             );
         }
         return (
-            <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+            <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                 <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                     <h1 className="f1">ROBOFRIENDS</h1>
                     {themeToggle}
