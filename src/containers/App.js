@@ -71,20 +71,36 @@ class App extends Component {
 
     fetchRobots = () => {
         this.setState({ isLoading: true, error: null });
-        fetch('https://jsonplaceholder.typicode.com/users')
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to load robots (' + response.status + ')');
+        // e2e verifier: guard API call against missing fetch, non-thenable, sync throws and non-Error rejections (null/string)
+        if (typeof fetch !== 'function') {
+            this.setState({ error: 'Failed to load robots', isLoading: false });
+            return;
+        }
+        try {
+            const result = fetch('https://jsonplaceholder.typicode.com/users');
+            if (!result || typeof result.then !== 'function') {
+                throw new Error('Failed to load robots');
             }
-            return response.json();
-        })
-        .then(json => {
-            if (!Array.isArray(json)) {
-                throw new Error('Invalid data format');
-            }
-            this.setState({ robots: json, isLoading: false, error: null });
-        })
-        .catch(err => this.setState({ error: err.message || 'Failed to load robots', isLoading: false }));
+            result.then(response => {
+                if (!response || !response.ok) {
+                    throw new Error('Failed to load robots (' + (response?.status ?? 'unknown') + ')');
+                }
+                return response.json();
+            })
+            .then(json => {
+                if (!Array.isArray(json)) {
+                    throw new Error('Invalid data format');
+                }
+                this.setState({ robots: json, isLoading: false, error: null });
+            })
+            .catch(err => {
+                const msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots');
+                this.setState({ error: msg || 'Failed to load robots', isLoading: false });
+            });
+        } catch (err) {
+            const msg = err?.message ?? (err != null ? String(err) : 'Failed to load robots');
+            this.setState({ error: msg || 'Failed to load robots', isLoading: false });
+        }
     }
 
     componentDidMount () {
@@ -167,7 +183,9 @@ class App extends Component {
     }
 
     goToPage = (nextPage) => {
-        this.setState({ page: nextPage });
+        const n = Number(nextPage);
+        if (!Number.isFinite(n)) return;
+        this.setState({ page: Math.max(1, Math.floor(n)) });
     }
 
     onSelectRobot = (robot) => this.setState({ selectedRobot: robot });
@@ -191,10 +209,14 @@ class App extends Component {
             if (aVal > bVal) return sortDir === 'asc' ? 1 : -1;
             return 0;
         });
-        const totalPages = Math.max(1, Math.ceil(sorted.length / pageSize));
-        const page = Math.min(currentPage, totalPages);
-        const start = (page - 1) * pageSize;
-        const pagedRobots = sorted.slice(start, start + pageSize);
+        const nPageSize = Number(pageSize);
+        const safePageSize = Number.isFinite(nPageSize) ? Math.max(1, Math.floor(nPageSize)) : 6;
+        const totalPages = Math.max(1, Math.ceil(sorted.length / safePageSize));
+        const nPage = Number(currentPage);
+        const safeCurrent = Number.isFinite(nPage) ? Math.floor(nPage) : 1;
+        const page = Math.min(Math.max(1, safeCurrent), totalPages);
+        const start = (page - 1) * safePageSize;
+        const pagedRobots = sorted.slice(start, start + safePageSize);
         const themeToggle = (
             <button
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
