@@ -400,3 +400,16 @@ h1 {
     color: #e2e8f0;
     animation: fadeIn 400ms ease-out;
 }
+
+/* Theme toggle integration: ensure header flex layout works */
+.app-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 1rem;
+}
+
+/* Light theme header text handling */
+body[data-theme='light'] .app-header h1 {
+  color: #0f172a;
+}
