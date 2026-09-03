@@ -151,7 +151,7 @@ class App extends Component {
     };
 
     onSearchChange = (event) => {
-        const val = event.target.value;
+        const val = String(event?.target?.value ?? '');
         this.setState({ searchfield: val, page: 1 });
         this.debouncedSetSearch(val);
     }
@@ -161,8 +161,9 @@ class App extends Component {
     }
 
     onSortChange = (e) => {
-        const [sortBy, sortDir] = e.target.value.split(':');
-        this.setState({ sortBy, sortDir, page: 1 });
+        const raw = String(e?.target?.value ?? 'name:asc');
+        const [sortBy, sortDir] = raw.split(':');
+        this.setState({ sortBy: sortBy || 'name', sortDir: sortDir || 'asc', page: 1 });
     }
 
     goToPage = (nextPage) => {
@@ -243,6 +244,7 @@ class App extends Component {
             )
         }
 
+        const favoritesCount = Array.isArray(favorites) ? favorites.length : 0;
         const favToolbar = (
             <div className="toolbar">
                 <button
@@ -250,7 +252,7 @@ class App extends Component {
                     onClick={this.toggleFavoritesFilter}
                     aria-pressed={showFavoritesOnly}
                 >
-                    {showFavoritesOnly ? 'Showing favorites' : 'Show favorites'} ({favorites.length})
+                    {showFavoritesOnly ? 'Showing favorites' : 'Show favorites'} ({favoritesCount})
                 </button>
             </div>
         );
@@ -272,7 +274,7 @@ class App extends Component {
             </div>
         );
 
-        if (showFavoritesOnly && favorites.length === 0) {
+        if (showFavoritesOnly && favoritesCount === 0) {
             return (
                 <div className={`app-root tc theme-${theme}`} data-theme={theme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>

@@ -1,6 +1,7 @@
 import React from "react"; 
 
 const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
+    const displayValue = String(value ?? '');
     return (
         <div className="pa2 search-wrapper relative">
             <label htmlFor="search-robots" className="clip">Search robots</label>
@@ -14,10 +15,10 @@ const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
             type="search" 
             placeholder="Search robots by name"
             aria-label="Search robots by name"
-            value={value}
+            value={displayValue}
             onChange={searchChange}
             />
-            {value && !hideClear && (
+            {displayValue && !hideClear && (
                 <button
                 aria-label="Clear search"
                 data-testid="search-clear-btn"
