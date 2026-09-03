@@ -2,6 +2,9 @@ import React from "react";
 
 const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
     const displayValue = String(value ?? '');
+    // e2e verifier: guard team spawn edge cases - non-function callbacks should not crash (API call -> team spawn -> verifier)
+    const safeOnClear = typeof onClear === 'function' ? onClear : () => {};
+    const safeSearchChange = typeof searchChange === 'function' ? searchChange : () => {};
     return (
         <div className="pa2 search-wrapper relative">
             <label htmlFor="search-robots" className="clip">Search robots</label>
@@ -16,14 +19,14 @@ const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
             placeholder="Search robots by name"
             aria-label="Search robots by name"
             value={displayValue}
-            onChange={searchChange}
+            onChange={safeSearchChange}
             />
             {displayValue && !hideClear && (
                 <button
                 aria-label="Clear search"
                 data-testid="search-clear-btn"
                 className="ml2 pa2 ba b--green bg-white pointer search-clear"
-                onClick={onClear}
+                onClick={safeOnClear}
                 >
                 ×
                 </button>
