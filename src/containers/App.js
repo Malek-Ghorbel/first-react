@@ -23,13 +23,15 @@ function getInitialTheme() {
 }
 
 function applyTheme(theme) {
+    // e2e verifier: guard team spawn edge cases - corrupt theme values should not leak to verifier (API call -> team spawn -> verifier)
+    const safeTheme = theme === 'dark' ? 'dark' : 'light';
     try {
         if (typeof document !== 'undefined') {
-            document.documentElement.setAttribute('data-theme', theme);
-            document.documentElement.style.colorScheme = theme;
+            document.documentElement.setAttribute('data-theme', safeTheme);
+            document.documentElement.style.colorScheme = safeTheme;
             if (document.body) {
-                document.body.setAttribute('data-theme', theme);
-                document.body.dataset.theme = theme;
+                document.body.setAttribute('data-theme', safeTheme);
+                document.body.dataset.theme = safeTheme;
             }
         }
     } catch {}
@@ -37,9 +39,11 @@ function applyTheme(theme) {
 
 function debounce(fn, delay) {
     let timer;
+    const safeFn = typeof fn === 'function' ? fn : () => {};
+    const safeDelay = Number.isFinite(delay) ? delay : 300;
     const debounced = (...args) => {
         clearTimeout(timer);
-        timer = setTimeout(() => fn(...args), delay);
+        timer = setTimeout(() => safeFn(...args), safeDelay);
     };
     debounced.cancel = () => clearTimeout(timer);
     return debounced;
