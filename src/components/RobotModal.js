@@ -23,6 +23,10 @@ const RobotModal = ({ robot, onClose }) => {
         if (e.target === e.currentTarget) onClose();
     };
 
+    const displayName = String(robot?.name ?? '');
+    const displayEmail = String(robot?.email ?? '');
+    const displayId = String(robot?.id ?? '');
+
     return (
         <div
             className="fixed top-0 left-0 w-100 h-100 bg-black-60 flex items-center justify-center z-999 modal-backdrop"
@@ -39,14 +43,14 @@ const RobotModal = ({ robot, onClose }) => {
                 onClick={(e) => e.stopPropagation()}
             >
                 <img
-                    alt={`Robot avatar for ${robot.name}`}
-                    src={`https://robohash.org/${robot.id}?size=200x200`}
+                    alt={`Robot avatar for ${displayName}`}
+                    src={`https://robohash.org/${displayId}?size=200x200`}
                     style={{ width: '200px', height: '200px' }}
                     loading="lazy"
                 />
-                <h2 id="robot-modal-title">{robot.name}</h2>
-                <p>{robot.email}</p>
-                <p className="gray">ID: {robot.id}</p>
+                <h2 id="robot-modal-title">{displayName}</h2>
+                <p>{displayEmail}</p>
+                <p className="gray">ID: {displayId}</p>
                 <button
                     ref={closeBtnRef}
                     onClick={onClose}
