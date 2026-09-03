@@ -335,7 +335,7 @@ class App extends Component {
                     {favToolbar}
                     {sortToolbar}
                     <div className="empty-state">
-                    <p className="f4" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
+                    <p className="f4" aria-live="polite">No robots found for &ldquo;{String(this.state.searchfield ?? '')}&rdquo;</p>
                     <button data-testid="clear-search-empty" className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
                     </div>
                     </div>
