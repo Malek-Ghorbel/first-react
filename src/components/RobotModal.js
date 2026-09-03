@@ -2,13 +2,14 @@ import React, { useEffect, useRef } from 'react';
 
 const RobotModal = ({ robot, onClose }) => {
     const closeBtnRef = useRef(null);
+    const safeOnClose = typeof onClose === 'function' ? onClose : () => {};
 
     useEffect(() => {
         if (closeBtnRef.current) {
             closeBtnRef.current.focus();
         }
         const handleEsc = (e) => {
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') safeOnClose();
         };
         document.addEventListener('keydown', handleEsc);
         const prevOverflow = document.body.style.overflow;
@@ -17,10 +18,10 @@ const RobotModal = ({ robot, onClose }) => {
             document.removeEventListener('keydown', handleEsc);
             document.body.style.overflow = prevOverflow;
         };
-    }, [onClose]);
+    }, [safeOnClose]);
 
     const handleBackdropClick = (e) => {
-        if (e.target === e.currentTarget) onClose();
+        if (e.target === e.currentTarget) safeOnClose();
     };
 
     const displayName = String(robot?.name ?? '');
@@ -53,7 +54,7 @@ const RobotModal = ({ robot, onClose }) => {
                 <p className="gray">ID: {displayId}</p>
                 <button
                     ref={closeBtnRef}
-                    onClick={onClose}
+                    onClick={safeOnClose}
                     className="pa2 mt2 br2 bg-blue white bn pointer modal-close"
                 >
                     Close
