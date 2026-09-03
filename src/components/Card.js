@@ -1,6 +1,7 @@
 import React from 'react' ;
 
 const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
+    const displayId = String(id ?? '');
     const displayName = String(name ?? '');
     const displayEmail = String(email ?? '');
     const handleKeyDown = (e) => {
@@ -29,7 +30,7 @@ const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
                     {isFavorite ? '★' : '☆'}
                 </button>
             )}
-            <img alt={`Robot avatar for ${displayName}`} src={`https://robohash.org/${id}?size=200x200`} loading="lazy" />
+            <img alt={`Robot avatar for ${displayName}`} src={`https://robohash.org/${displayId}?size=200x200`} loading="lazy" />
             <div>
                 <h2> {displayName} </h2> 
                 <p> {displayEmail} </p>
