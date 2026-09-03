@@ -237,7 +237,9 @@ class App extends Component {
             try { return lowerName.includes(debouncedLower); } catch { return false; }
         }) ;
         const filteredRobots = showFavoritesOnly
-            ? searched.filter(r => r != null && Array.isArray(favorites) && favorites.includes(r.id))
+            ? searched.filter(r => {
+                try { return r != null && Array.isArray(favorites) && favorites.includes(r.id); } catch { return false; }
+            })
             : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
             let aVal; try { aVal = String(a[safeSortBy] ?? '').toLowerCase(); } catch { aVal = ''; }
