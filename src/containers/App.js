@@ -7,6 +7,33 @@ import ErrorBoundry from "./ErrorBoundry";
 import RobotModal from "../components/RobotModal";
 
 const FAV_KEY = 'robofriends:favorites';
+const THEME_KEY = 'robofriends:theme';
+
+function getInitialTheme() {
+    try {
+        const stored = localStorage.getItem(THEME_KEY);
+        if (stored === 'light' || stored === 'dark') return stored;
+    } catch {}
+    try {
+        if (typeof window !== 'undefined' && window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+            return 'dark';
+        }
+    } catch {}
+    return 'light';
+}
+
+function applyTheme(theme) {
+    try {
+        if (typeof document !== 'undefined') {
+            document.documentElement.setAttribute('data-theme', theme);
+            document.documentElement.style.colorScheme = theme;
+            if (document.body) {
+                document.body.setAttribute('data-theme', theme);
+                document.body.dataset.theme = theme;
+            }
+        }
+    } catch {}
+}
 
 function debounce(fn, delay) {
     let timer;
@@ -31,11 +58,13 @@ class App extends Component {
             pageSize: 6,
             selectedRobot: null,
             favorites: [],
-            showFavoritesOnly: false
+            showFavoritesOnly: false,
+            theme: getInitialTheme()
         }
         this.debouncedSetSearch = debounce((val) => {
             this.setState({ debouncedSearchfield: val });
         }, 300);
+        applyTheme(this.state.theme);
     }
 
     fetchRobots = () => {
@@ -61,6 +90,16 @@ class App extends Component {
                 }
             }
         } catch {}
+        try {
+            const storedTheme = localStorage.getItem(THEME_KEY);
+            if ((storedTheme === 'light' || storedTheme === 'dark') && storedTheme !== this.state.theme) {
+                this.setState({ theme: storedTheme });
+            } else {
+                applyTheme(this.state.theme);
+            }
+        } catch {
+            applyTheme(this.state.theme);
+        }
         this.fetchRobots();
     }
 
@@ -70,7 +109,17 @@ class App extends Component {
                 localStorage.setItem(FAV_KEY, JSON.stringify(this.state.favorites));
             } catch {}
         }
+        if (prevState.theme !== this.state.theme) {
+            try {
+                localStorage.setItem(THEME_KEY, this.state.theme);
+            } catch {}
+            applyTheme(this.state.theme);
+        }
     }
+
+    toggleTheme = () => {
+        this.setState(prev => ({ theme: prev.theme === 'dark' ? 'light' : 'dark' }));
+    };
 
     toggleFavorite = (id) => {
         this.setState(prev => ({
@@ -107,7 +156,7 @@ class App extends Component {
     onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
-        const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly } = this.state;
+        const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
         const searched = this.state.robots.filter( robot => {
             return(robot.name.toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
@@ -125,11 +174,26 @@ class App extends Component {
         const page = Math.min(currentPage, totalPages);
         const start = (page - 1) * pageSize;
         const pagedRobots = sorted.slice(start, start + pageSize);
+
+        const themeToggle = (
+            <button
+                aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                data-testid="theme-toggle"
+                onClick={this.toggleTheme}
+                className="pa2 br2 ba b--green bg-white pointer"
+                title={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
+                style={{minWidth:'80px'}}
+            >
+                {theme === 'dark' ? '☀️ Light' : '🌙 Dark'}
+            </button>
+        );
+
         if (this.state.error) {
             return (
-                <div className="app-root tc" role="alert" aria-live="polite">
-                    <header className="app-header">
+                <div className={`app-root tc theme-${theme}`} data-theme={theme} role="alert" aria-live="polite">
+                    <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
+                        {themeToggle}
                     </header>
                     <div className="app-main">
                     <p className="f4 red">Error: {this.state.error}</p>
@@ -140,9 +204,10 @@ class App extends Component {
         }
         if (this.state.isLoading) {
             return (
-                <div className="app-root tc">
-                    <header className="app-header">
+                <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                    <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
+                        {themeToggle}
                     </header>
                     <div className="loading-container">
                         <h1 aria-live="polite" className="loading-title f1">loading ...</h1>
@@ -173,7 +238,7 @@ class App extends Component {
 
         const sortToolbar = (
             <div className="toolbar">
-                <label htmlFor="sort-select" className="mr2" style={{color:'#e2e8f0', fontWeight:600}}>Sort by</label>
+                <label htmlFor="sort-select" className="mr2" style={{color: theme === 'dark' ? '#e2e8f0' : '#0f172a', fontWeight:600}}>Sort by</label>
                 <select
                     id="sort-select"
                     value={`${sortBy}:${sortDir}`}
@@ -190,9 +255,10 @@ class App extends Component {
 
         if (showFavoritesOnly && favorites.length === 0) {
             return (
-                <div className="app-root tc">
-                    <header className="app-header">
+                <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                    <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
+                        {themeToggle}
                     </header>
                     <div className="app-main">
                     <SearchBox
@@ -211,9 +277,10 @@ class App extends Component {
         }
         if (!filteredRobots.length) {
             return (
-                <div className="app-root tc">
-                    <header className="app-header">
+                <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                    <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                         <h1 className="f1">ROBOFRIENDS</h1>
+                        {themeToggle}
                     </header>
                     <div className="app-main">
                     <SearchBox
@@ -232,9 +299,10 @@ class App extends Component {
             );
         }
         return (
-            <div className="app-root tc">
-                <header className="app-header">
+            <div className={`app-root tc theme-${theme}`} data-theme={theme}>
+                <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
                     <h1 className="f1">ROBOFRIENDS</h1>
+                    {themeToggle}
                 </header>
                 <div className="app-main">
                 <SearchBox
