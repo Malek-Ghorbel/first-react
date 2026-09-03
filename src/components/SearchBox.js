@@ -1,6 +1,6 @@
 import React from "react"; 
 
-const SearchBox = ({ value, searchChange, onClear }) => {
+const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
     return (
         <div className="pa2 search-wrapper relative">
             <label htmlFor="search-robots" className="clip">Search robots</label>
@@ -17,9 +17,10 @@ const SearchBox = ({ value, searchChange, onClear }) => {
             value={value}
             onChange={searchChange}
             />
-            {value && (
+            {value && !hideClear && (
                 <button
                 aria-label="Clear search"
+                data-testid="search-clear-btn"
                 className="ml2 pa2 ba b--green bg-white pointer search-clear"
                 onClick={onClear}
                 >
