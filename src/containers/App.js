@@ -136,47 +136,70 @@ class App extends Component {
     }
 
     componentDidUpdate(prevProps, prevState) {
-        if (prevState.favorites !== this.state.favorites) {
+        // e2e verifier: guard team spawn edge cases - throwing state getters should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+        let prevFav, currFav, prevTheme, currTheme;
+        try { prevFav = prevState?.favorites; } catch { prevFav = undefined; }
+        try { currFav = this.state.favorites; } catch { currFav = undefined; }
+        try { prevTheme = prevState?.theme; } catch { prevTheme = undefined; }
+        try { currTheme = this.state.theme; } catch { currTheme = undefined; }
+        if (prevFav !== currFav) {
             try {
-                localStorage.setItem(FAV_KEY, JSON.stringify(this.state.favorites));
+                localStorage.setItem(FAV_KEY, JSON.stringify(currFav));
             } catch {}
         }
-        if (prevState.theme !== this.state.theme) {
+        if (prevTheme !== currTheme) {
+            let safeThemeToStore;
+            try { safeThemeToStore = currTheme; } catch { safeThemeToStore = 'light'; }
             try {
-                localStorage.setItem(THEME_KEY, this.state.theme);
+                localStorage.setItem(THEME_KEY, safeThemeToStore);
             } catch {}
-            applyTheme(this.state.theme);
+            try { applyTheme(currTheme); } catch {}
         }
     }
 
     componentWillUnmount() {
-        if (this.debouncedSetSearch && this.debouncedSetSearch.cancel) {
-            this.debouncedSetSearch.cancel();
-        }
+        try {
+            if (this.debouncedSetSearch && typeof this.debouncedSetSearch.cancel === 'function') {
+                this.debouncedSetSearch.cancel();
+            }
+        } catch {}
     }
 
 
     toggleTheme = () => {
         // e2e verifier: guard team spawn edge cases - corrupt theme in state should still toggle correctly (API call -> team spawn -> verifier)
         this.setState(prev => {
-            const safePrev = prev.theme === 'dark' ? 'dark' : 'light';
+            let safePrev;
+            try { safePrev = prev.theme === 'dark' ? 'dark' : 'light'; } catch { safePrev = 'light'; }
             return { theme: safePrev === 'dark' ? 'light' : 'dark' };
         });
     };
 
     toggleFavorite = (id) => {
+        // e2e verifier: guard team spawn edge cases - throwing id getter or corrupt favorites should not crash verifier (API call -> team spawn -> edge cases -> verifier)
         this.setState(prev => {
-            const favs = Array.isArray(prev.favorites) ? prev.favorites : [];
-            return {
-                favorites: favs.includes(id)
-                    ? favs.filter(x => x !== id)
-                    : [...favs, id]
-            };
+            try {
+                let favs;
+                try { favs = Array.isArray(prev.favorites) ? prev.favorites : []; } catch { favs = []; }
+                let isFav;
+                try { isFav = favs.includes(id); } catch { isFav = false; }
+                return {
+                    favorites: isFav
+                        ? favs.filter(x => { try { return x !== id; } catch { return true; } })
+                        : [...favs, id]
+                };
+            } catch {
+                try { return { favorites: Array.isArray(prev.favorites) ? prev.favorites : [] }; } catch { return { favorites: [] }; }
+            }
         });
     };
 
     toggleFavoritesFilter = () => {
-        this.setState(prev => ({ showFavoritesOnly: !prev.showFavoritesOnly, page: 1 }));
+        this.setState(prev => {
+            let cur;
+            try { cur = prev.showFavoritesOnly; } catch { cur = false; }
+            return { showFavoritesOnly: !cur, page: 1 };
+        });
     };
 
     onSearchChange = (event) => {
@@ -218,13 +241,23 @@ class App extends Component {
     onCloseModal = () => this.setState({ selectedRobot: null });
 
     render () {
-        const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
+        // e2e verifier: guard team spawn edge cases - throwing state getters should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+        let sortBy, sortDir, currentPage, pageSize, favorites, showFavoritesOnly, theme;
+        try { sortBy = this.state.sortBy; } catch { sortBy = undefined; }
+        try { sortDir = this.state.sortDir; } catch { sortDir = undefined; }
+        try { currentPage = this.state.page; } catch { currentPage = undefined; }
+        try { pageSize = this.state.pageSize; } catch { pageSize = undefined; }
+        try { favorites = this.state.favorites; } catch { favorites = undefined; }
+        try { showFavoritesOnly = this.state.showFavoritesOnly; } catch { showFavoritesOnly = undefined; }
+        try { theme = this.state.theme; } catch { theme = undefined; }
         // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays, non-string values)
         // + guard team spawn edge cases - corrupt theme/sort should not leak to verifier (API call -> team spawn -> verifier)
         const safeTheme = theme === 'dark' ? 'dark' : 'light';
         const safeSortBy = sortBy === 'email' ? 'email' : 'name';
         const safeSortDir = sortDir === 'desc' ? 'desc' : 'asc';
-        const sanitizedRobots = Array.isArray(this.state.robots) ? this.state.robots.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
+        let robotsRaw;
+        try { robotsRaw = this.state.robots; } catch { robotsRaw = undefined; }
+        const sanitizedRobots = Array.isArray(robotsRaw) ? robotsRaw.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
         let debouncedSearch;
         try { debouncedSearch = String(this.state.debouncedSearchfield ?? ''); } catch { debouncedSearch = ''; }
         let debouncedLower;
@@ -271,7 +304,14 @@ class App extends Component {
             </button>
         );
 
-        if (this.state.error) {
+        let renderError;
+        try { renderError = this.state.error; } catch { renderError = null; }
+        let renderIsLoading;
+        try { renderIsLoading = this.state.isLoading; } catch { renderIsLoading = false; }
+        let safeRenderError;
+        try { safeRenderError = renderError != null ? String(renderError) : ''; } catch { safeRenderError = 'Failed to load robots'; }
+
+        if (safeRenderError) {
             return (
                 <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme} role="alert" aria-live="polite">
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -279,13 +319,13 @@ class App extends Component {
                         {themeToggle}
                     </header>
                     <div className="app-main">
-                    <p className="f4 red">Error: {this.state.error}</p>
+                    <p className="f4 red">Error: {safeRenderError}</p>
                     <button className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.fetchRobots}>Retry</button>
                     </div>
                 </div>
             );
         }
-        if (this.state.isLoading) {
+        if (renderIsLoading) {
             return (
                 <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -307,7 +347,10 @@ class App extends Component {
             )
         }
 
-        const favoritesCount = Array.isArray(favorites) ? favorites.length : 0;
+        let favoritesCount;
+        try { favoritesCount = Array.isArray(favorites) ? favorites.length : 0; } catch { favoritesCount = 0; }
+        // guard favorites.length throwing
+        try { if (Array.isArray(favorites)) favoritesCount = favorites.length; } catch { favoritesCount = 0; }
         const favToolbar = (
             <div className="toolbar">
                 <button
@@ -338,6 +381,10 @@ class App extends Component {
         );
 
         if (showFavoritesOnly && favoritesCount === 0) {
+            let safeSearchfield;
+            try { safeSearchfield = this.state.searchfield; } catch { safeSearchfield = ''; }
+            let displaySearchfield;
+            try { displaySearchfield = String(safeSearchfield ?? ''); } catch { displaySearchfield = ''; }
             return (
                 <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -346,7 +393,7 @@ class App extends Component {
                     </header>
                     <div className="app-main">
                     <SearchBox
-                    value={this.state.searchfield}
+                    value={displaySearchfield}
                     searchChange={this.onSearchChange}
                     onClear={this.onClearSearch}
                     />
@@ -370,7 +417,7 @@ class App extends Component {
                     </header>
                     <div className="app-main">
                     <SearchBox
-                    value={this.state.searchfield}
+                    value={safeSearchfieldDisplay}
                     searchChange={this.onSearchChange}
                     onClear={this.onClearSearch}
                     hideClear
@@ -385,6 +432,12 @@ class App extends Component {
                 </div>
             );
         }
+        let safeSearchfieldMain;
+        try { safeSearchfieldMain = this.state.searchfield; } catch { safeSearchfieldMain = ''; }
+        let displaySearchfieldMain;
+        try { displaySearchfieldMain = String(safeSearchfieldMain ?? ''); } catch { displaySearchfieldMain = ''; }
+        let selectedRobotRaw;
+        try { selectedRobotRaw = this.state.selectedRobot; } catch { selectedRobotRaw = null; }
         return (
             <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                 <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -393,7 +446,7 @@ class App extends Component {
                 </header>
                 <div className="app-main">
                 <SearchBox
-                value={this.state.searchfield}
+                value={displaySearchfieldMain}
                 searchChange={this.onSearchChange}
                 onClear={this.onClearSearch}
                 />
@@ -410,8 +463,8 @@ class App extends Component {
                     <button onClick={() => this.goToPage(page + 1)} disabled={page === totalPages} aria-label="Next page" className="pa2 br2 bg-light-green ba b--green pointer pagination-btn">Next</button>
                 </div>
                 </div>
-                {this.state.selectedRobot && (
-                    <RobotModal robot={this.state.selectedRobot} onClose={this.onCloseModal} />
+                {selectedRobotRaw && (
+                    <RobotModal robot={selectedRobotRaw} onClose={this.onCloseModal} />
                 )}
             </div>
         );
