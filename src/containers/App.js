@@ -37,10 +37,12 @@ function applyTheme(theme) {
 
 function debounce(fn, delay) {
     let timer;
-    return (...args) => {
+    const debounced = (...args) => {
         clearTimeout(timer);
         timer = setTimeout(() => fn(...args), delay);
     };
+    debounced.cancel = () => clearTimeout(timer);
+    return debounced;
 }
 
 class App extends Component {
@@ -76,7 +78,12 @@ class App extends Component {
             }
             return response.json();
         })
-        .then(json => this.setState({ robots: json, isLoading: false, error: null }))
+        .then(json => {
+            if (!Array.isArray(json)) {
+                throw new Error('Invalid data format');
+            }
+            this.setState({ robots: json, isLoading: false, error: null });
+        })
         .catch(err => this.setState({ error: err.message || 'Failed to load robots', isLoading: false }));
     }
 
@@ -116,6 +123,13 @@ class App extends Component {
             applyTheme(this.state.theme);
         }
     }
+
+    componentWillUnmount() {
+        if (this.debouncedSetSearch && this.debouncedSetSearch.cancel) {
+            this.debouncedSetSearch.cancel();
+        }
+    }
+
 
     toggleTheme = () => {
         this.setState(prev => ({ theme: prev.theme === 'dark' ? 'light' : 'dark' }));
@@ -158,7 +172,7 @@ class App extends Component {
     render () {
         const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
         const searched = this.state.robots.filter( robot => {
-            return(robot.name.toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
+            return((robot.name || '').toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
         const filteredRobots = showFavoritesOnly
             ? searched.filter(r => favorites.includes(r.id))
@@ -287,12 +301,13 @@ class App extends Component {
                     value={this.state.searchfield}
                     searchChange={this.onSearchChange}
                     onClear={this.onClearSearch}
+                    hideClear
                     />
                     {favToolbar}
                     {sortToolbar}
                     <div className="empty-state">
                     <p className="f4" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
-                    <button className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
+                    <button data-testid="clear-search-empty" className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
                     </div>
                     </div>
                 </div>
