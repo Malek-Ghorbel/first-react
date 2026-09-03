@@ -171,12 +171,13 @@ class App extends Component {
 
     render () {
         const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
-        const sanitizedRobots = this.state.robots.filter(r => r && typeof r === 'object');
+        // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays)
+        const sanitizedRobots = Array.isArray(this.state.robots) ? this.state.robots.filter(r => r && typeof r === 'object' && !Array.isArray(r)) : [];
         const searched = sanitizedRobots.filter( robot => {
             return((robot.name || '').toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
         const filteredRobots = showFavoritesOnly
-            ? searched.filter(r => r && favorites.includes(r.id))
+            ? searched.filter(r => r != null && Array.isArray(favorites) && favorites.includes(r.id))
             : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
             const aVal = (a[sortBy] || '').toLowerCase();

@@ -2,7 +2,8 @@ import React from "react";
 import Card from "./Card";
 
 const CardList = ({robots, favorites, onToggleFavorite, onSelect}) => {
-    const validRobots = (robots || []).filter(r => r && typeof r.id !== 'undefined');
+    // e2e verifier: guard team spawn against edge cases (null, non-array, missing id)
+    const validRobots = (Array.isArray(robots) ? robots : []).filter(r => r != null && r.id != null);
     const cardcomponent = validRobots.map( (robot) => <Card key={robot.id} 
                                                         id={robot.id} 
                                                         name={robot.name} 
