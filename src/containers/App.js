@@ -171,11 +171,12 @@ class App extends Component {
 
     render () {
         const { sortBy, sortDir, page: currentPage, pageSize, favorites, showFavoritesOnly, theme } = this.state;
-        const searched = this.state.robots.filter( robot => {
+        const sanitizedRobots = this.state.robots.filter(r => r && typeof r === 'object');
+        const searched = sanitizedRobots.filter( robot => {
             return((robot.name || '').toLowerCase().includes(this.state.debouncedSearchfield.toLowerCase())  )
         }) ;
         const filteredRobots = showFavoritesOnly
-            ? searched.filter(r => favorites.includes(r.id))
+            ? searched.filter(r => r && favorites.includes(r.id))
             : searched;
         const sorted = [...filteredRobots].sort((a, b) => {
             const aVal = (a[sortBy] || '').toLowerCase();
@@ -188,7 +189,6 @@ class App extends Component {
         const page = Math.min(currentPage, totalPages);
         const start = (page - 1) * pageSize;
         const pagedRobots = sorted.slice(start, start + pageSize);
-
         const themeToggle = (
             <button
                 aria-label={`Switch to ${theme === 'dark' ? 'light' : 'dark'} mode`}
