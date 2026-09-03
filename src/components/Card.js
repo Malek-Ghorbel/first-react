@@ -1,9 +1,10 @@
 import React from 'react' ;
 
 const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
-    const displayId = String(id ?? '');
-    const displayName = String(name ?? '');
-    const displayEmail = String(email ?? '');
+    // e2e verifier: guard team spawn edge cases - corrupt values throwing on String should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+    let displayId; try { displayId = String(id ?? ''); } catch { displayId = ''; }
+    let displayName; try { displayName = String(name ?? ''); } catch { displayName = ''; }
+    let displayEmail; try { displayEmail = String(email ?? ''); } catch { displayEmail = ''; }
     // e2e verifier: guard team spawn against non-function callbacks (string/number/object/null)
     const safeOnSelect = typeof onSelect === 'function' ? onSelect : undefined;
     const safeOnToggle = typeof onToggleFavorite === 'function' ? onToggleFavorite : undefined;

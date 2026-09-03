@@ -24,9 +24,10 @@ const RobotModal = ({ robot, onClose }) => {
         if (e.target === e.currentTarget) safeOnClose();
     };
 
-    const displayName = String(robot?.name ?? '');
-    const displayEmail = String(robot?.email ?? '');
-    const displayId = String(robot?.id ?? '');
+    // e2e verifier: guard team spawn edge cases - corrupt robot values throwing on String should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+    let displayName; try { displayName = String(robot?.name ?? ''); } catch { displayName = ''; }
+    let displayEmail; try { displayEmail = String(robot?.email ?? ''); } catch { displayEmail = ''; }
+    let displayId; try { displayId = String(robot?.id ?? ''); } catch { displayId = ''; }
 
     return (
         <div

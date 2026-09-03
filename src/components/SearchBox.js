@@ -1,7 +1,7 @@
 import React from "react"; 
 
 const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
-    const displayValue = String(value ?? '');
+    let displayValue; try { displayValue = String(value ?? ''); } catch { displayValue = ''; }
     // e2e verifier: guard team spawn edge cases - non-function callbacks should not crash (API call -> team spawn -> verifier)
     const safeOnClear = typeof onClear === 'function' ? onClear : () => {};
     const safeSearchChange = typeof searchChange === 'function' ? searchChange : () => {};
