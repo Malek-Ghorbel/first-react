@@ -4,10 +4,13 @@ const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
     const displayId = String(id ?? '');
     const displayName = String(name ?? '');
     const displayEmail = String(email ?? '');
+    // e2e verifier: guard team spawn against non-function callbacks (string/number/object/null)
+    const safeOnSelect = typeof onSelect === 'function' ? onSelect : undefined;
+    const safeOnToggle = typeof onToggleFavorite === 'function' ? onToggleFavorite : undefined;
     const handleKeyDown = (e) => {
         if (e.key === 'Enter' || e.key === ' ') {
             e.preventDefault();
-            if (onSelect) onSelect();
+            if (safeOnSelect) safeOnSelect();
         }
     };
     return (
@@ -15,15 +18,15 @@ const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
             role="button"
             tabIndex={0}
             aria-label={`View details for ${displayName}`}
-            onClick={onSelect}
+            onClick={safeOnSelect}
             onKeyDown={handleKeyDown}
             className="robo-card bg-light-green dib br3 ma2 grow shadow-5 pointer relative"
         >
-            {onToggleFavorite && (
+            {safeOnToggle && (
                 <button
                     aria-label={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
                     aria-pressed={isFavorite}
-                    onClick={(e) => { e.stopPropagation(); onToggleFavorite(id); }}
+                    onClick={(e) => { e.stopPropagation(); safeOnToggle(id); }}
                     className="favorite-btn absolute top-0 right-0 ma2 bg-white br-100 ba b--black-10 pointer"
                     title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
