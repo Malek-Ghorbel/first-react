@@ -25,7 +25,7 @@ const RobotModal = ({ robot, onClose }) => {
 
     return (
         <div
-            className="fixed top-0 left-0 w-100 h-100 bg-black-60 flex items-center justify-center z-999"
+            className="fixed top-0 left-0 w-100 h-100 bg-black-60 flex items-center justify-center z-999 modal-backdrop"
             style={{ position: 'fixed', top: 0, left: 0, width: '100%', height: '100%' }}
             onClick={handleBackdropClick}
             data-testid="modal-backdrop"
@@ -34,7 +34,7 @@ const RobotModal = ({ robot, onClose }) => {
                 role="dialog"
                 aria-modal="true"
                 aria-labelledby="robot-modal-title"
-                className="bg-white br3 pa4 tc shadow-5 relative"
+                className="bg-white br3 pa4 tc shadow-5 relative modal-dialog"
                 style={{ maxWidth: '400px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}
                 onClick={(e) => e.stopPropagation()}
             >
@@ -42,6 +42,7 @@ const RobotModal = ({ robot, onClose }) => {
                     alt={`Robot avatar for ${robot.name}`}
                     src={`https://robohash.org/${robot.id}?size=200x200`}
                     style={{ width: '200px', height: '200px' }}
+                    loading="lazy"
                 />
                 <h2 id="robot-modal-title">{robot.name}</h2>
                 <p>{robot.email}</p>
@@ -49,7 +50,7 @@ const RobotModal = ({ robot, onClose }) => {
                 <button
                     ref={closeBtnRef}
                     onClick={onClose}
-                    className="pa2 mt2 br2 bg-blue white bn pointer"
+                    className="pa2 mt2 br2 bg-blue white bn pointer modal-close"
                 >
                     Close
                 </button>

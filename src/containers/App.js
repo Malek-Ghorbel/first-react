@@ -127,21 +127,42 @@ class App extends Component {
         const pagedRobots = sorted.slice(start, start + pageSize);
         if (this.state.error) {
             return (
-                <div className="tc" role="alert" aria-live="polite">
-                    <h1 className="f1">ROBOFRIENDS</h1>
+                <div className="app-root tc" role="alert" aria-live="polite">
+                    <header className="app-header">
+                        <h1 className="f1">ROBOFRIENDS</h1>
+                    </header>
+                    <div className="app-main">
                     <p className="f4 red">Error: {this.state.error}</p>
-                    <button className="pa2 mt2 br2 bg-blue white bn pointer" onClick={this.fetchRobots}>Retry</button>
+                    <button className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.fetchRobots}>Retry</button>
+                    </div>
                 </div>
             );
         }
         if (this.state.isLoading) {
-            return (<h1 aria-live="polite">loading ...</h1>)
+            return (
+                <div className="app-root tc">
+                    <header className="app-header">
+                        <h1 className="f1">ROBOFRIENDS</h1>
+                    </header>
+                    <div className="loading-container">
+                        <h1 aria-live="polite" className="loading-title f1">loading ...</h1>
+                        <div className="skeleton-grid" aria-hidden="true">
+                            <div className="skeleton-card"></div>
+                            <div className="skeleton-card"></div>
+                            <div className="skeleton-card"></div>
+                            <div className="skeleton-card"></div>
+                            <div className="skeleton-card"></div>
+                            <div className="skeleton-card"></div>
+                        </div>
+                    </div>
+                </div>
+            )
         }
 
         const favToolbar = (
-            <div className="flex justify-center items-center gap2 mv2">
+            <div className="toolbar">
                 <button
-                    className={showFavoritesOnly ? 'b--green bg-light-green pa2 ba pointer br2' : 'b--black-20 pa2 ba pointer br2 bg-white'}
+                    className={showFavoritesOnly ? 'toolbar-btn toolbar-btn-active' : 'toolbar-btn'}
                     onClick={this.toggleFavoritesFilter}
                     aria-pressed={showFavoritesOnly}
                 >
@@ -151,13 +172,13 @@ class App extends Component {
         );
 
         const sortToolbar = (
-            <div className="flex flex-wrap justify-center items-center gap2 mv2">
-                <label htmlFor="sort-select" className="mr2">Sort by</label>
+            <div className="toolbar">
+                <label htmlFor="sort-select" className="mr2" style={{color:'#e2e8f0', fontWeight:600}}>Sort by</label>
                 <select
                     id="sort-select"
                     value={`${sortBy}:${sortDir}`}
                     onChange={this.onSortChange}
-                    className="pa2 ba b--green bg-white"
+                    className="pa2 ba b--green bg-white sort-select"
                 >
                     <option value="name:asc">Name A→Z</option>
                     <option value="name:desc">Name Z→A</option>
@@ -169,8 +190,11 @@ class App extends Component {
 
         if (showFavoritesOnly && favorites.length === 0) {
             return (
-                <div className="tc">
-                    <h1 className="f1">ROBOFRIENDS</h1>
+                <div className="app-root tc">
+                    <header className="app-header">
+                        <h1 className="f1">ROBOFRIENDS</h1>
+                    </header>
+                    <div className="app-main">
                     <SearchBox
                     value={this.state.searchfield}
                     searchChange={this.onSearchChange}
@@ -178,14 +202,20 @@ class App extends Component {
                     />
                     {favToolbar}
                     {sortToolbar}
-                    <p className="f4 gray">No favorites yet — tap ☆ on a card to save one.</p>
+                    <div className="empty-state">
+                    <p className="f4">No favorites yet — tap ☆ on a card to save one.</p>
+                    </div>
+                    </div>
                 </div>
             );
         }
         if (!filteredRobots.length) {
             return (
-                <div className="tc">
-                    <h1 className="f1">ROBOFRIENDS</h1>
+                <div className="app-root tc">
+                    <header className="app-header">
+                        <h1 className="f1">ROBOFRIENDS</h1>
+                    </header>
+                    <div className="app-main">
                     <SearchBox
                     value={this.state.searchfield}
                     searchChange={this.onSearchChange}
@@ -193,14 +223,20 @@ class App extends Component {
                     />
                     {favToolbar}
                     {sortToolbar}
-                    <p className="f4 gray" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
-                    <button className="pa2 mt2 br2 bg-blue white bn pointer" onClick={this.onClearSearch}>Clear search</button>
+                    <div className="empty-state">
+                    <p className="f4" aria-live="polite">No robots found for &ldquo;{this.state.searchfield}&rdquo;</p>
+                    <button className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
+                    </div>
+                    </div>
                 </div>
             );
         }
         return (
-            <div className="tc">
-                <h1 className="f1">ROBOFRIENDS</h1>
+            <div className="app-root tc">
+                <header className="app-header">
+                    <h1 className="f1">ROBOFRIENDS</h1>
+                </header>
+                <div className="app-main">
                 <SearchBox
                 value={this.state.searchfield}
                 searchChange={this.onSearchChange}
@@ -213,10 +249,11 @@ class App extends Component {
                         <CardList robots={pagedRobots} favorites={favorites} onToggleFavorite={this.toggleFavorite} onSelect={this.onSelectRobot} />
                     </ErrorBoundry>
                 </Scroll>
-                <div className="flex justify-center items-center gap3 mv3">
-                    <button onClick={() => this.goToPage(page - 1)} disabled={page === 1} aria-label="Previous page" className="pa2 br2 bg-light-green ba b--green pointer">Prev</button>
-                    <span aria-live="polite" className="mh2">Page {page} of {totalPages}</span>
-                    <button onClick={() => this.goToPage(page + 1)} disabled={page === totalPages} aria-label="Next page" className="pa2 br2 bg-light-green ba b--green pointer">Next</button>
+                <div className="pagination">
+                    <button onClick={() => this.goToPage(page - 1)} disabled={page === 1} aria-label="Previous page" className="pa2 br2 bg-light-green ba b--green pointer pagination-btn">Prev</button>
+                    <span aria-live="polite" className="pagination-info mh2">Page {page} of {totalPages}</span>
+                    <button onClick={() => this.goToPage(page + 1)} disabled={page === totalPages} aria-label="Next page" className="pa2 br2 bg-light-green ba b--green pointer pagination-btn">Next</button>
+                </div>
                 </div>
                 {this.state.selectedRobot && (
                     <RobotModal robot={this.state.selectedRobot} onClose={this.onCloseModal} />

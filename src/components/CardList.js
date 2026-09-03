@@ -2,8 +2,6 @@ import React from "react";
 import Card from "./Card";
 
 const CardList = ({robots, favorites, onToggleFavorite, onSelect}) => {
-   // throw new Error('noooo') ;
-
     const cardcomponent = robots.map( (user,i) => <Card key={robots[i].id} 
                                                         id={robots[i].id} 
                                                         name={robots[i].name} 
@@ -15,7 +13,7 @@ const CardList = ({robots, favorites, onToggleFavorite, onSelect}) => {
     ) ;
 
     return (
-        <div>
+        <div className="card-grid">
             {cardcomponent}
         </div>
     ) ;

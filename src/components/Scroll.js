@@ -2,7 +2,7 @@ import React from "react";
 
 const Scroll = (props) => {
     return (
-        <div style={{ overflowY: 'auto', border: '1px solid #e0e0e0', maxHeight: '60vh', padding: '0.5rem' }}>
+        <div className="modern-scroll" style={{ overflowY: 'auto', border: '1px solid rgba(255,255,255,0.08)', maxHeight: '68vh', padding: '0.75rem', scrollBehavior: 'smooth' }}>
             {props.children} 
         </div>
     ) ;
