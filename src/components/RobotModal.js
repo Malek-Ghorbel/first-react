@@ -5,23 +5,34 @@ const RobotModal = ({ robot, onClose }) => {
     const safeOnClose = typeof onClose === 'function' ? onClose : () => {};
 
     useEffect(() => {
-        if (closeBtnRef.current) {
-            closeBtnRef.current.focus();
-        }
+        try {
+            if (closeBtnRef.current) {
+                try { closeBtnRef.current.focus(); } catch {}
+            }
+        } catch {}
         const handleEsc = (e) => {
-            if (e.key === 'Escape') safeOnClose();
+            try {
+                if (e?.key === 'Escape') {
+                    try { safeOnClose(); } catch {}
+                }
+            } catch {}
         };
-        document.addEventListener('keydown', handleEsc);
-        const prevOverflow = document.body.style.overflow;
-        document.body.style.overflow = 'hidden';
+        try { document.addEventListener('keydown', handleEsc); } catch {}
+        let prevOverflow;
+        try { prevOverflow = document?.body?.style?.overflow; } catch { prevOverflow = undefined; }
+        try { if (document?.body?.style) document.body.style.overflow = 'hidden'; } catch {}
         return () => {
-            document.removeEventListener('keydown', handleEsc);
-            document.body.style.overflow = prevOverflow;
+            try { document.removeEventListener('keydown', handleEsc); } catch {}
+            try { if (document?.body?.style) document.body.style.overflow = prevOverflow ?? ''; } catch {}
         };
     }, [safeOnClose]);
 
     const handleBackdropClick = (e) => {
-        if (e.target === e.currentTarget) safeOnClose();
+        try {
+            if (e?.target === e?.currentTarget) {
+                try { safeOnClose(); } catch {}
+            }
+        } catch {}
     };
 
     // e2e verifier: guard team spawn edge cases - corrupt robot values throwing on String should not crash verifier (API call -> team spawn -> edge cases -> verifier)
