@@ -434,7 +434,8 @@ class App extends Component {
                 </div>
             );
         }
-        if (!filteredRobots.length) {
+        let filteredCount; try { filteredCount = Array.isArray(filteredRobots) ? filteredRobots.length : 0; } catch { filteredCount = 0; }
+        if (filteredCount === 0) {
             let safeSearchfieldDisplay;
             try { safeSearchfieldDisplay = String(this.state.searchfield ?? ''); } catch { safeSearchfieldDisplay = ''; }
             return (
