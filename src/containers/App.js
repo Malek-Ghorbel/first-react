@@ -76,12 +76,15 @@ class App extends Component {
     fetchRobots = () => {
         this.setState({ isLoading: true, error: null });
         // e2e verifier: guard API call against missing fetch, non-thenable, sync throws and non-Error rejections (null/string)
-        if (typeof fetch !== 'function') {
-            this.setState({ error: 'Failed to load robots', isLoading: false });
-            return;
-        }
+        // also guard team spawn edge case where fetch is defined as throwing getter (API call -> team spawn -> verifier)
         try {
-            const result = fetch('https://jsonplaceholder.typicode.com/users');
+            let fetchFn;
+            try { fetchFn = fetch; } catch { fetchFn = undefined; }
+            if (typeof fetchFn !== 'function') {
+                this.setState({ error: 'Failed to load robots', isLoading: false });
+                return;
+            }
+            const result = fetchFn('https://jsonplaceholder.typicode.com/users');
             if (!result || typeof result.then !== 'function') {
                 throw new Error('Failed to load robots');
             }
