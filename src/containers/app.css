@@ -427,3 +427,18 @@ h1 {
 body[data-theme='light'] .app-header h1 {
   color: #0f172a;
 }
+
+.app-footer {
+  margin-top: auto;
+  padding: 1.25rem 0 0.5rem;
+  text-align: center;
+  color: #cbd5e1;
+  font-size: 0.875rem;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  backdrop-filter: blur(6px);
+}
+
+body[data-theme='light'] .app-footer {
+  color: #475569;
+  border-top-color: rgba(15, 23, 42, 0.08);
+}

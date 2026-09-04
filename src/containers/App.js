@@ -85,7 +85,7 @@ class App extends Component {
             try { fetchFn = fetch; } catch { fetchFn = undefined; }
             // e2e verifier: fallback to globalThis/window fetch for team spawn environments (API call -> team spawn -> verifier)
             if (typeof fetchFn !== 'function') {
-                try { fetchFn = typeof globalThis !== 'undefined' && globalThis.fetch ? globalThis.fetch : undefined; } catch {}
+                try { fetchFn = typeof globalThis !== 'undefined' && globalThis.fetch ? globalThis.fetch : undefined; } catch {} // eslint-disable-line no-undef
             }
             if (typeof fetchFn !== 'function') {
                 try { fetchFn = typeof window !== 'undefined' && window.fetch ? window.fetch : undefined; } catch {}
@@ -281,6 +281,7 @@ class App extends Component {
         // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays, non-string values)
         // + guard team spawn edge cases - corrupt theme/sort should not leak to verifier (API call -> team spawn -> verifier)
         const safeTheme = theme === 'dark' ? 'dark' : 'light';
+        const currentYear = new Date().getFullYear();
         const safeSortBy = sortBy === 'email' ? 'email' : 'name';
         const safeSortDir = sortDir === 'desc' ? 'desc' : 'asc';
         let robotsRaw;
@@ -350,6 +351,7 @@ class App extends Component {
                     <p className="f4 red">Error: {safeRenderError}</p>
                     <button className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.fetchRobots}>Retry</button>
                     </div>
+                    <footer data-testid="app-footer" className="app-footer tc pa3 mt3">© {currentYear} RoboFriends</footer>
                 </div>
             );
         }
@@ -371,6 +373,7 @@ class App extends Component {
                             <div className="skeleton-card"></div>
                         </div>
                     </div>
+                    <footer data-testid="app-footer" className="app-footer tc pa3 mt3">© {currentYear} RoboFriends</footer>
                 </div>
             )
         }
@@ -431,6 +434,7 @@ class App extends Component {
                     <p className="f4">No favorites yet — tap ☆ on a card to save one.</p>
                     </div>
                     </div>
+                    <footer data-testid="app-footer" className="app-footer tc pa3 mt3">© {currentYear} RoboFriends</footer>
                 </div>
             );
         }
@@ -458,6 +462,7 @@ class App extends Component {
                     <button data-testid="clear-search-empty" className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
                     </div>
                     </div>
+                    <footer data-testid="app-footer" className="app-footer tc pa3 mt3">© {currentYear} RoboFriends</footer>
                 </div>
             );
         }
@@ -492,6 +497,7 @@ class App extends Component {
                     <button onClick={() => this.goToPage(page + 1)} disabled={page === totalPages} aria-label="Next page" className="pa2 br2 bg-light-green ba b--green pointer pagination-btn">Next</button>
                 </div>
                 </div>
+                <footer data-testid="app-footer" className="app-footer tc pa3 mt3">© {currentYear} RoboFriends</footer>
                 {selectedRobotRaw && (
                     <RobotModal robot={selectedRobotRaw} onClose={this.onCloseModal} />
                 )}
