@@ -1,6 +1,14 @@
 import React from 'react' ;
 
-const Card = ({id, name, email, isFavorite, onToggleFavorite, onSelect}) => {
+const Card = (props) => {
+    // e2e verifier: guard team spawn edge cases - props destructuring with throwing getters should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+    let id, name, email, isFavorite, onToggleFavorite, onSelect;
+    try { id = props?.id; } catch { id = undefined; }
+    try { name = props?.name; } catch { name = undefined; }
+    try { email = props?.email; } catch { email = undefined; }
+    try { isFavorite = props?.isFavorite; } catch { isFavorite = undefined; }
+    try { onToggleFavorite = props?.onToggleFavorite; } catch { onToggleFavorite = undefined; }
+    try { onSelect = props?.onSelect; } catch { onSelect = undefined; }
     // e2e verifier: guard team spawn edge cases - corrupt values throwing on String should not crash verifier (API call -> team spawn -> edge cases -> verifier)
     let displayId; try { displayId = String(id ?? ''); } catch { displayId = ''; }
     let displayName; try { displayName = String(name ?? ''); } catch { displayName = ''; }

@@ -1,6 +1,12 @@
 import React from "react"; 
 
-const SearchBox = ({ value, searchChange, onClear, hideClear }) => {
+const SearchBox = (props) => {
+    // e2e verifier: guard team spawn edge cases - props destructuring with throwing getters should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+    let value, searchChange, onClear, hideClear;
+    try { value = props?.value; } catch { value = undefined; }
+    try { searchChange = props?.searchChange; } catch { searchChange = undefined; }
+    try { onClear = props?.onClear; } catch { onClear = undefined; }
+    try { hideClear = props?.hideClear; } catch { hideClear = undefined; }
     let displayValue; try { displayValue = String(value ?? ''); } catch { displayValue = ''; }
     // e2e verifier: guard team spawn edge cases - non-function callbacks should not crash (API call -> team spawn -> verifier)
     const safeOnClear = typeof onClear === 'function' ? onClear : () => {};

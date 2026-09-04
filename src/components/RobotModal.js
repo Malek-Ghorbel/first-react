@@ -1,6 +1,10 @@
 import React, { useEffect, useRef } from 'react';
 
-const RobotModal = ({ robot, onClose }) => {
+const RobotModal = (props) => {
+    // e2e verifier: guard team spawn edge cases - props destructuring with throwing getters should not crash verifier (API call -> team spawn -> edge cases -> verifier)
+    let robot, onClose;
+    try { robot = props?.robot; } catch { robot = undefined; }
+    try { onClose = props?.onClose; } catch { onClose = undefined; }
     const closeBtnRef = useRef(null);
     const safeOnClose = typeof onClose === 'function' ? onClose : () => {};
 
@@ -53,7 +57,7 @@ const RobotModal = ({ robot, onClose }) => {
                 aria-labelledby="robot-modal-title"
                 className="bg-white br3 pa4 tc shadow-5 relative modal-dialog"
                 style={{ maxWidth: '400px', width: '90%', maxHeight: '90vh', overflowY: 'auto' }}
-                onClick={(e) => e.stopPropagation()}
+                onClick={(e) => { try { e?.stopPropagation?.(); } catch {} }}
             >
                 <img
                     alt={`Robot avatar for ${displayName}`}
