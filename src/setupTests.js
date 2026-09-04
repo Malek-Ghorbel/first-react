@@ -16,12 +16,28 @@ try {
       let safeConfig = config;
       if (config != null && typeof config === 'object') {
         try {
-          const keys = typeof Reflect !== 'undefined' && typeof Reflect.ownKeys === 'function' ? Reflect.ownKeys(config) : Object.keys(config);
+          let keys;
+          try {
+            keys = typeof Reflect !== 'undefined' && typeof Reflect.ownKeys === 'function' ? Reflect.ownKeys(config) : Object.keys(config);
+          } catch {
+            try { keys = Object.keys(config); } catch { keys = []; }
+          }
           let needsSafeCopy = false;
           for (let i = 0; i < keys.length; i++) {
             try {
               const k = keys[i];
-              const desc = Object.getOwnPropertyDescriptor(config, k);
+              let desc;
+              try { desc = Object.getOwnPropertyDescriptor(config, k); } catch { desc = null; }
+              if (!desc) {
+                try {
+                  let cur = Object.getPrototypeOf(config);
+                  while (cur) {
+                    try { desc = Object.getOwnPropertyDescriptor(cur, k); } catch {}
+                    if (desc) break;
+                    cur = Object.getPrototypeOf(cur);
+                  }
+                } catch {}
+              }
               if (!desc || !desc.enumerable) continue;
               if (desc.get) { needsSafeCopy = true; break; }
             } catch { needsSafeCopy = true; break; }
@@ -32,9 +48,21 @@ try {
               const k = keys[i];
               try {
                 if (!Object.prototype.hasOwnProperty.call(config, k)) continue;
-              } catch { continue; }
+              } catch {
+                try { if (!(k in config)) continue; } catch { continue; }
+              }
               let desc;
               try { desc = Object.getOwnPropertyDescriptor(config, k); } catch { continue; }
+              if (!desc) {
+                try {
+                  let cur = Object.getPrototypeOf(config);
+                  while (cur) {
+                    try { desc = Object.getOwnPropertyDescriptor(cur, k); } catch {}
+                    if (desc) break;
+                    cur = Object.getPrototypeOf(cur);
+                  }
+                } catch {}
+              }
               if (!desc || !desc.enumerable) continue;
               try {
                 if ('value' in desc) {
@@ -46,29 +74,16 @@ try {
                 }
               } catch { safeConfig[k] = undefined; }
             }
-          } else {
-            // Fast path: no throwing getters detected, but still need to guard direct access that might throw
-            // Attempt a shallow safe copy via try/catch per prop if Orig would have thrown
-            // We optimistically try original path and fallback on throw
-            try {
-              // Probe one prop read to detect throw without full copy
-              for (let i = 0; i < keys.length; i++) {
-                const k = keys[i];
-                try {
-                  const desc = Object.getOwnPropertyDescriptor(config, k);
-                  if (!desc || !desc.enumerable) continue;
-                  // trigger getter via direct access to see if it throws
-                  // but we already checked desc.get, so this is for value getters that throw on access via prototype?
-                  // we use descriptor value path above, so no throw
-                } catch {}
-              }
-            } catch {}
           }
         } catch {
           try { safeConfig = {}; } catch {}
         }
       }
-      return origCreateElement.call(this, type, safeConfig, ...children);
+      try {
+        return origCreateElement.call(this, type, safeConfig, ...children);
+      } catch (e) {
+        try { return origCreateElement.call(this, type, {}, ...children); } catch { throw e; }
+      }
     };
     hardenedCreateElement.__syntaroHardened = true;
     hardenedCreateElement.isHardened = true;
@@ -89,15 +104,34 @@ try {
     if (typeof React.cloneElement === 'function' && !React.cloneElement.__syntaroHardened) {
       const origCloneElement = React.cloneElement;
       const hardenedCloneElement = function (element, config, ...children) {
+        if (element == null) {
+          return null;
+        }
         let safeConfig = config;
         if (config != null && typeof config === 'object') {
           try {
-            const keys = typeof Reflect !== 'undefined' && typeof Reflect.ownKeys === 'function' ? Reflect.ownKeys(config) : Object.keys(config);
+            let keys;
+            try {
+              keys = typeof Reflect !== 'undefined' && typeof Reflect.ownKeys === 'function' ? Reflect.ownKeys(config) : Object.keys(config);
+            } catch {
+              try { keys = Object.keys(config); } catch { keys = []; }
+            }
             let needsSafeCopy = false;
             for (let i = 0; i < keys.length; i++) {
               try {
                 const k = keys[i];
-                const desc = Object.getOwnPropertyDescriptor(config, k);
+                let desc;
+                try { desc = Object.getOwnPropertyDescriptor(config, k); } catch { desc = null; }
+                if (!desc) {
+                  try {
+                    let cur = Object.getPrototypeOf(config);
+                    while (cur) {
+                      try { desc = Object.getOwnPropertyDescriptor(cur, k); } catch {}
+                      if (desc) break;
+                      cur = Object.getPrototypeOf(cur);
+                    }
+                  } catch {}
+                }
                 if (!desc || !desc.enumerable) continue;
                 if (desc.get) { needsSafeCopy = true; break; }
               } catch { needsSafeCopy = true; break; }
@@ -106,9 +140,19 @@ try {
               safeConfig = {};
               for (let i = 0; i < keys.length; i++) {
                 const k = keys[i];
-                try { if (!Object.prototype.hasOwnProperty.call(config, k)) continue; } catch { continue; }
+                try { if (!Object.prototype.hasOwnProperty.call(config, k)) continue; } catch { try { if (!(k in config)) continue; } catch { continue; } }
                 let desc;
                 try { desc = Object.getOwnPropertyDescriptor(config, k); } catch { continue; }
+                if (!desc) {
+                  try {
+                    let cur = Object.getPrototypeOf(config);
+                    while (cur) {
+                      try { desc = Object.getOwnPropertyDescriptor(cur, k); } catch {}
+                      if (desc) break;
+                      cur = Object.getPrototypeOf(cur);
+                    }
+                  } catch {}
+                }
                 if (!desc || !desc.enumerable) continue;
                 try {
                   if ('value' in desc) safeConfig[k] = desc.value;
@@ -119,7 +163,11 @@ try {
             }
           } catch { try { safeConfig = {}; } catch {} }
         }
-        return origCloneElement.call(this, element, safeConfig, ...children);
+        try {
+          return origCloneElement.call(this, element, safeConfig, ...children);
+        } catch (e) {
+          try { return origCloneElement.call(this, element, {}, ...children); } catch { return null; }
+        }
       };
       hardenedCloneElement.__syntaroHardened = true;
       hardenedCloneElement.isHardened = true;
