@@ -52,6 +52,7 @@ function debounce(fn, delay) {
 class App extends Component {
     constructor () {
         super() ;
+        this._isMounted = false;
         this.state = {
             robots : [],
             searchfield :'',
@@ -68,7 +69,9 @@ class App extends Component {
             theme: getInitialTheme()
         }
         this.debouncedSetSearch = debounce((val) => {
-            this.setState({ debouncedSearchfield: val });
+            // e2e verifier: guard team spawn debounce leakage - fake timers may fire after unmount (API call -> team spawn -> verifier)
+            if (!this._isMounted) return;
+            try { this.setState({ debouncedSearchfield: val }); } catch {}
         }, 300);
         applyTheme(this.state.theme);
     }
@@ -123,6 +126,7 @@ class App extends Component {
     }
 
     componentDidMount () {
+        this._isMounted = true;
         try {
             const raw = localStorage.getItem(FAV_KEY);
             if (raw) {
@@ -166,8 +170,8 @@ class App extends Component {
             try { applyTheme(currTheme); } catch {}
         }
     }
-
     componentWillUnmount() {
+        this._isMounted = false;
         try {
             if (this.debouncedSetSearch && typeof this.debouncedSetSearch.cancel === 'function') {
                 this.debouncedSetSearch.cancel();
