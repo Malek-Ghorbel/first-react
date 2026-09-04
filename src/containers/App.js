@@ -91,6 +91,9 @@ class App extends Component {
                 try { fetchFn = typeof window !== 'undefined' && window.fetch ? window.fetch : undefined; } catch {}
             }
             if (typeof fetchFn !== 'function') {
+                this.setState({ error: 'Failed to load robots', isLoading: false });
+                return;
+            }
             const result = fetchFn('https://jsonplaceholder.typicode.com/users');
             // e2e verifier: harden API call against throwing then getter (team spawn edge -> verifier)
             let resultThen;
