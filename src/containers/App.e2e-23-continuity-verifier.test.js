@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, waitFor, cleanup, fireEvent } from '@testing-library/react';
+import { render, screen, waitFor, cleanup, fireEvent, act } from '@testing-library/react';
 import App from './App';
 import Card from '../components/Card';
 import CardList from '../components/CardList';
@@ -16,6 +16,8 @@ const mockSuccess = (data = robots) => {
 describe('regression #23: e2e continuity API->team spawn->edge->verifier (fixes #23)', () => {
   let origFetchDesc;
   beforeEach(() => {
+    // e2e verifier: ensure real timers for debounce (previous suites may leak fake timers) -> API call -> team spawn -> verifier
+    try { jest.useRealTimers(); } catch {}
     localStorage.clear();
     document.documentElement.removeAttribute('data-theme');
     if (document.body) document.body.removeAttribute('data-theme');
@@ -24,6 +26,7 @@ describe('regression #23: e2e continuity API->team spawn->edge->verifier (fixes 
     origFetchDesc = Object.getOwnPropertyDescriptor(global, 'fetch');
   });
   afterEach(() => {
+    try { jest.useRealTimers(); } catch {}
     jest.restoreAllMocks();
     localStorage.clear();
     cleanup();
@@ -130,18 +133,26 @@ describe('regression #23: e2e continuity API->team spawn->edge->verifier (fixes 
   });
 
   it('verifier: search debounce and clear still work after hardening', async () => {
+    // ensure real timers for debounce - guard against fake-timer leakage from other suites (API call -> team spawn -> edge -> verifier)
+    try { jest.useRealTimers(); } catch {}
     mockSuccess();
     render(<App />);
     await waitFor(() => expect(screen.getByText('Leanne Graham')).toBeInTheDocument());
     const input = screen.getByPlaceholderText(/Search robots/i);
     fireEvent.change(input, { target: { value: 'Leanne' } });
     await waitFor(() => expect(input.value).toBe('Leanne'));
-    // debounced filter eventually applied (debounce 300ms)
+    // debounced filter eventually applied (debounce 300ms) - allow real timer to fire (API call -> team spawn -> verifier)
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 400));
+    });
     await waitFor(() => expect(screen.queryByText('Ervin Howell')).not.toBeInTheDocument(), { timeout: 2000 });
     expect(screen.getByText('Leanne Graham')).toBeInTheDocument();
     const clearBtn = screen.getByTestId('search-clear-btn');
     fireEvent.click(clearBtn);
     await waitFor(() => expect(input.value).toBe(''));
+    await act(async () => {
+      await new Promise((r) => setTimeout(r, 400));
+    });
     // after clear, both robots re-appear (debounced clear)
     await waitFor(() => expect(screen.getByText('Ervin Howell')).toBeInTheDocument(), { timeout: 2000 });
   });
