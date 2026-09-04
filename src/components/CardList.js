@@ -1,7 +1,13 @@
 import React from "react";
 import Card from "./Card";
 
-const CardList = ({robots, favorites, onToggleFavorite, onSelect}) => {
+const CardList = (props) => {
+    // e2e verifier: guard team spawn against props destructuring throwing getters (API call -> team spawn -> edge cases -> verifier)
+    let robots, favorites, onToggleFavorite, onSelect;
+    try { robots = props?.robots; } catch { robots = undefined; }
+    try { favorites = props?.favorites; } catch { favorites = undefined; }
+    try { onToggleFavorite = props?.onToggleFavorite; } catch { onToggleFavorite = undefined; }
+    try { onSelect = props?.onSelect; } catch { onSelect = undefined; }
     // e2e verifier: guard team spawn against edge cases (null, non-array, missing id, non-array favorites, non-function callbacks, throwing id getter)
     const validRobots = (Array.isArray(robots) ? robots : []).filter(r => {
         if (r == null) return false;
@@ -25,7 +31,7 @@ const CardList = ({robots, favorites, onToggleFavorite, onSelect}) => {
                                                         email={remail}
                                                         isFavorite={fav}
                                                         onToggleFavorite={safeOnToggle}
-                                                        onSelect={safeOnSelect ? () => safeOnSelect(robot) : undefined}
+                                                        onSelect={safeOnSelect ? () => { try { safeOnSelect(robot); } catch {} } : undefined}
                                                     />;
     }) ;
 
