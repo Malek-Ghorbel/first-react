@@ -89,13 +89,20 @@ class App extends Component {
                 throw new Error('Failed to load robots');
             }
             result.then(response => {
-                if (!response || !response.ok) {
-                    throw new Error('Failed to load robots (' + (response?.status ?? 'unknown') + ')');
+                // e2e verifier: guard team spawn edge where response getters (ok/status/json) throw (API call -> team spawn -> edge cases -> verifier)
+                let ok, status, jsonFn;
+                try { ok = response?.ok; } catch { ok = false; }
+                if (!response || !ok) {
+                    try { status = response?.status; } catch { status = 'unknown'; }
+                    let safeStatus;
+                    try { safeStatus = status ?? 'unknown'; } catch { safeStatus = 'unknown'; }
+                    throw new Error('Failed to load robots (' + safeStatus + ')');
                 }
-                if (!response || typeof response.json !== 'function') {
+                try { jsonFn = response?.json; } catch { jsonFn = undefined; }
+                if (!response || typeof jsonFn !== 'function') {
                     throw new Error('Invalid data format');
                 }
-                return response.json();
+                return jsonFn.call(response);
             })
             .then(json => {
                 if (!Array.isArray(json)) {
