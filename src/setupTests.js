@@ -86,6 +86,45 @@ try {
       hardenedJsxs.__syntaroHardened = true;
       React.jsxs = hardenedJsxs;
     }
+    if (typeof React.cloneElement === 'function' && !React.cloneElement.__syntaroHardened) {
+      const origCloneElement = React.cloneElement;
+      const hardenedCloneElement = function (element, config, ...children) {
+        let safeConfig = config;
+        if (config != null && typeof config === 'object') {
+          try {
+            const keys = typeof Reflect !== 'undefined' && typeof Reflect.ownKeys === 'function' ? Reflect.ownKeys(config) : Object.keys(config);
+            let needsSafeCopy = false;
+            for (let i = 0; i < keys.length; i++) {
+              try {
+                const k = keys[i];
+                const desc = Object.getOwnPropertyDescriptor(config, k);
+                if (!desc || !desc.enumerable) continue;
+                if (desc.get) { needsSafeCopy = true; break; }
+              } catch { needsSafeCopy = true; break; }
+            }
+            if (needsSafeCopy) {
+              safeConfig = {};
+              for (let i = 0; i < keys.length; i++) {
+                const k = keys[i];
+                try { if (!Object.prototype.hasOwnProperty.call(config, k)) continue; } catch { continue; }
+                let desc;
+                try { desc = Object.getOwnPropertyDescriptor(config, k); } catch { continue; }
+                if (!desc || !desc.enumerable) continue;
+                try {
+                  if ('value' in desc) safeConfig[k] = desc.value;
+                  else if (typeof desc.get === 'function') { try { safeConfig[k] = desc.get.call(config); } catch { safeConfig[k] = undefined; } }
+                  else safeConfig[k] = undefined;
+                } catch { safeConfig[k] = undefined; }
+              }
+            }
+          } catch { try { safeConfig = {}; } catch {} }
+        }
+        return origCloneElement.call(this, element, safeConfig, ...children);
+      };
+      hardenedCloneElement.__syntaroHardened = true;
+      hardenedCloneElement.isHardened = true;
+      React.cloneElement = hardenedCloneElement;
+    }
     if (typeof React.createFactory === 'function' && !React.createFactory.__syntaroHardened) {
       // createFactory returns a factory that internally calls createElement - already hardened via createElement
     }
