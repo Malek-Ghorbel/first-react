@@ -23,7 +23,7 @@ function getInitialTheme() {
 }
 
 function applyTheme(theme) {
-    // e2e verifier: guard team spawn edge cases - corrupt theme values should not leak to verifier (API call -> team spawn -> verifier)
+    // e2e verifier: guard team spawn edge cases - corrupt theme values should not leak to the verifier (API call -> team spawn -> verifier)
     const safeTheme = theme === 'dark' ? 'dark' : 'light';
     try {
         if (typeof document !== 'undefined') {
