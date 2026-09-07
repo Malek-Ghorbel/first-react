@@ -296,7 +296,11 @@ class App extends Component {
             try { nameStr = String(robot.name ?? ''); } catch { nameStr = ''; }
             let lowerName;
             try { lowerName = nameStr.toLowerCase(); } catch { lowerName = ''; }
-            try { return lowerName.includes(debouncedLower); } catch { return false; }
+            let emailStr;
+            try { emailStr = String(robot.email ?? ''); } catch { emailStr = ''; }
+            let lowerEmail;
+            try { lowerEmail = emailStr.toLowerCase(); } catch { lowerEmail = ''; }
+            try { return lowerName.includes(debouncedLower) || lowerEmail.includes(debouncedLower); } catch { return false; }
         }) ;
         const filteredRobots = showFavoritesOnly
             ? searched.filter(r => {
