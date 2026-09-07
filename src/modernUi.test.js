@@ -58,7 +58,7 @@ describe('modern UI regression - improves fluid browsing experience', () => {
       expect(container.querySelector('.app-header')).toBeInTheDocument();
       expect(container.querySelector('.app-main')).toBeInTheDocument();
 
-      // Grid layout instead of legacy dib stack
+      // Grid layout instead of legacy div stack
       const grid = container.querySelector('.card-grid');
       expect(grid).toBeInTheDocument();
       // cards inside grid
