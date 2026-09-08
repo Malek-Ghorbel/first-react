@@ -447,6 +447,11 @@ class App extends Component {
         if (filteredCount === 0) {
             let safeSearchfieldDisplay;
             try { safeSearchfieldDisplay = String(this.state.searchfield ?? ''); } catch { safeSearchfieldDisplay = ''; }
+            // Friendly empty-state for todo list when no items (fixes #106)
+            let sanitizedCount; try { sanitizedCount = Array.isArray(sanitizedRobots) ? sanitizedRobots.length : 0; } catch { sanitizedCount = 0; }
+            let isSearchEmpty; try { isSearchEmpty = debouncedLower === ''; } catch { isSearchEmpty = true; }
+            let showTodoEmpty;
+            try { showTodoEmpty = sanitizedCount === 0 && isSearchEmpty && !showFavoritesOnly; } catch { showTodoEmpty = false; }
             return (
                 <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                     <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -463,6 +468,7 @@ class App extends Component {
                     {favToolbar}
                     {sortToolbar}
                     <div className="empty-state">
+                    {showTodoEmpty && <p className="f4">All done! Add your first todo above.</p>}
                     <p className="f4" aria-live="polite">No robots found for &ldquo;{safeSearchfieldDisplay}&rdquo;</p>
                     <button data-testid="clear-search-empty" className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
                     </div>

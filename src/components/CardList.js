@@ -13,6 +13,16 @@ const CardList = (props) => {
         if (r == null) return false;
         try { return r.id != null; } catch { return false; }
     });
+    // Empty-state for todo list / robot list: show friendly message when no items (fixes #106)
+    let validCount;
+    try { validCount = Array.isArray(validRobots) ? validRobots.length : 0; } catch { validCount = 0; }
+    if (validCount === 0) {
+        return (
+            <div className="empty-state">
+                <p className="f4">All done! Add your first todo above.</p>
+            </div>
+        );
+    }
     const isFav = (id) => {
         try { return Array.isArray(favorites) && favorites.includes(id); } catch { return false; }
     };
