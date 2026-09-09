@@ -281,7 +281,7 @@ class App extends Component {
         // e2e verifier: guard end-to-end against corrupt state (non-array, null entries, arrays, non-string values)
         // + guard team spawn edge cases - corrupt theme/sort should not leak to verifier (API call -> team spawn -> verifier)
         const safeTheme = theme === 'dark' ? 'dark' : 'light';
-        // Footer year must be dynamic (fixes #87, #102): always show current year via getFullYear()
+        // Footer year must be dynamic (fixes #87, #101, #102): always show current year via getFullYear()
         const currentYear = new Date().getFullYear();
         const safeSortBy = sortBy === 'email' ? 'email' : 'name';
         const safeSortDir = sortDir === 'desc' ? 'desc' : 'asc';
