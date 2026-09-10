@@ -12,9 +12,12 @@
 // fix #125: same defect reported again. The construction is unchanged, but the
 // label is now assembled by *joining* its parts instead of concatenating them
 // and then calling trim() — the noun is the last part, so there is no code path
-// that can append a separator or space after it, and the trim() safety net is
-// gone because it is no longer needed. Pluralization for 0/1/5 is locked by
-// src/utils/format.regression-125.test.js.
+// that can append a separator or space after it.
+// fix #127: the trailing-space defect was reported once more ("1 robot "). The
+// join is kept, but the emitted label is now normalized with trim() as well, so
+// the "no leading/trailing whitespace" contract is enforced unconditionally at
+// the point of return rather than depending on how the parts are assembled.
+// Pluralization for 0/1/5 is locked by src/utils/format.regression-127.test.js.
 
 /**
  * Format a numeric count together with its noun.
@@ -52,7 +55,10 @@ export function formatCount(count) {
   // The separator only ever lands *between* the count and the noun, and the
   // noun is the last part, so no trailing space can be emitted — the guarantee
   // is structural ("1 robot", never "1 robot "), not a trim() afterthought.
-  return [String(n), noun].join(' ');
+  // fix #127: normalize at the point of return as well, so callers always get a
+  // whitespace-free label ("1 robot", "5 robots") regardless of how this body
+  // is refactored later.
+  return [String(n), noun].join(' ').trim();
 }
 
 export default formatCount;
