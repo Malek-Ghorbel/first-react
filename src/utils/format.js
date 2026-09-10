@@ -31,7 +31,12 @@ export function formatCount(count) {
   } catch {
     n = 0;
   }
-  return [String(n), n === 1 ? 'robot' : 'robots'].join(' ');
+  // fix #119: pick the noun first, then join. The singular form is selected
+  // only for a count of exactly one; every other count (including 0) keeps the
+  // plural. Joining the parts with a single separator means the label can never
+  // carry leading or trailing whitespace.
+  const noun = n === 1 ? 'robot' : 'robots';
+  return [String(n), noun].join(' ');
 }
 
 export default formatCount;
