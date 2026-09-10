@@ -26,8 +26,15 @@
 // formatCount(1, 'item') -> "1 item" and formatCount(2, 'item') -> "2 items".
 // The default noun stays the repo's domain label ("robot"/"robots"), so every
 // existing caller keeps the exact behavior it has today.
+// fix #136: a string noun supplied in its plural form ("items") — the wording
+// the issue uses — was used verbatim as the label, so a count of one still
+// rendered "1 items". A string noun is now singularized when, and only when,
+// pluralizing the derived singular reproduces the supplied word, so
+// formatCount(1, 'items') -> "1 item" while already-singular nouns ("item",
+// "class", "bus", "status") and every existing caller stay exactly as they are.
 // Pluralization for the default label is locked by
-// src/utils/format.regression-127.test.js and src/utils/format.regression-132.test.js.
+// src/utils/format.regression-127.test.js and src/utils/format.regression-132.test.js;
+// the plural-string noun is locked by src/utils/format.regression-136.test.js.
 
 /**
  * The noun pair rendered when no noun is supplied: the app counts robots.
@@ -74,12 +81,50 @@ function singularize(plural) {
   return word;
 }
 
+// Nouns that end in "s" but are already singular ("class", "bus", "status",
+// "analysis", "news", "series", "species"). They must be rendered exactly as
+// supplied, never run through singularize().
+// fix #136: this guard keeps a single-word noun that merely looks plural from
+// being rewritten ("bus" must never become "bu").
+const SINGULAR_S_WORDS = /(?:ss|us|is|as|news|series|species)$/i;
+
+/**
+ * Pick the singular form of a noun supplied as a single string.
+ *
+ * fix #136: the issue phrases the noun in its plural form ("items"), so a
+ * string noun may be either singular ("item") or plural ("items"). A word is
+ * only singularized when pluralizing the derived form reproduces the supplied
+ * word exactly — and when the word is not a known singular that merely ends in
+ * "s" — so already-singular nouns are rendered untouched and only genuine
+ * regular plurals are rewritten:
+ *
+ * - "item"  -> "item"
+ * - "items" -> "item"
+ * - "boxes" -> "box"
+ * - "cities" -> "city"
+ * - "class" -> "class"
+ * - "bus"   -> "bus"
+ *
+ * @param {string} word
+ * @returns {string}
+ */
+function singularFromString(word) {
+  if (word === '' || SINGULAR_S_WORDS.test(word)) return word;
+  if (!/s$/i.test(word)) return word;
+  const candidate = singularize(word);
+  if (candidate !== '' && candidate !== word && pluralize(candidate) === word) {
+    return candidate;
+  }
+  return word;
+}
+
 /**
  * Resolve the { singular, plural } noun pair to render.
  *
- * Accepts a singular string ("item"), a [singular, plural] pair, or a
- * { singular, plural } object. Anything unusable falls back to DEFAULT_NOUN so
- * the label is always renderable.
+ * Accepts a singular string ("item"), a plural string ("items", whose singular
+ * form is derived), a [singular, plural] pair, or a { singular, plural } object.
+ * Anything unusable falls back to DEFAULT_NOUN so the label is always
+ * renderable.
  *
  * @param {string|string[]|{singular?: string, plural?: string}} [noun]
  * @returns {{singular: string, plural: string}}
@@ -89,8 +134,12 @@ function resolveNoun(noun) {
     if (noun == null) return DEFAULT_NOUN;
 
     if (typeof noun === 'string') {
-      const singular = noun.trim();
-      if (singular === '') return DEFAULT_NOUN;
+      const word = noun.trim();
+      if (word === '') return DEFAULT_NOUN;
+      // fix #136: a string noun may arrive in its plural form ("items") — that
+      // is how the issue phrases the label. Derive the singular so a count of
+      // one renders "1 item" instead of "1 items"; singular input is unchanged.
+      const singular = singularFromString(word);
       return { singular, plural: pluralize(singular) };
     }
 
@@ -125,6 +174,7 @@ function resolveNoun(noun) {
  * - formatCount(5) -> "5 robots"
  * - formatCount(1, 'item') -> "1 item"
  * - formatCount(2, 'item') -> "2 items"
+ * - formatCount(1, 'items') -> "1 item"
  *
  * fix #115 / fix #117: the singular noun is selected for a count of exactly
  * one, and the label is assembled by joining its parts with a single space.
