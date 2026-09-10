@@ -5,6 +5,10 @@
 // trailing whitespace and must use the singular noun for a count of one.
 // fix #121: the same trailing-space defect was reported again; the label is
 // assembled from its parts and trimmed, so the guarantee holds unconditionally.
+// fix #123: the trailing-space defect was reported once more ("1 robot "). The
+// label is now built with exactly one separator *between* the number and the
+// noun and nothing is ever appended after the noun, so the emitted string has
+// no leading or trailing whitespace by construction (not merely by trimming).
 
 /**
  * Format a numeric count together with its noun.
@@ -38,12 +42,12 @@ export function formatCount(count) {
   // plural. Joining the parts with a single separator means the label can never
   // carry leading or trailing whitespace.
   const noun = n === 1 ? 'robot' : 'robots';
-  // fix #121: the issue reported a label that "appends the noun and a trailing
-  // space without trimming" ("1 robot "). The separator is only inserted
-  // *between* parts and the assembled label is trimmed, so the returned string
-  // is guaranteed to have no leading or trailing whitespace — headings
-  // therefore render exactly "1 robot" and "5 robots".
-  return [String(n), noun].join(' ').trim();
+  // fix #123: assemble the label from the normalized count and the noun with a
+  // single separator *between* them. Nothing is appended after the noun and no
+  // separator is added when either part is empty, so the returned string can
+  // never end in a space ("1 robot", never "1 robot ") — the guarantee is
+  // structural, the trim() below is only a belt-and-braces safety net.
+  return `${String(n)} ${noun}`.trim();
 }
 
 export default formatCount;
