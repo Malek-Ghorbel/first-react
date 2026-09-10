@@ -43,6 +43,7 @@ const Card = (props) => {
                     aria-label={isFavorite ? `Remove ${displayName} from favorites` : `Add ${displayName} to favorites`}
                     aria-pressed={isFavorite}
                     onClick={(e) => { try { e?.stopPropagation?.(); } catch {} try { if (safeOnToggle) safeOnToggle(id); } catch {} }}
+                    onKeyDown={(e) => { try { e?.stopPropagation?.(); } catch {} }}
                     className="favorite-btn absolute top-0 right-0 ma2 bg-white br-100 ba b--black-10 pointer"
                     title={isFavorite ? 'Remove from favorites' : 'Add to favorites'}
                 >
