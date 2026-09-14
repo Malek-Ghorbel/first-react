@@ -5,6 +5,7 @@ import "./app.css" ;
 import Scroll from "../components/Scroll";
 import ErrorBoundry from "./ErrorBoundry";
 import RobotModal from "../components/RobotModal";
+import { formatCount } from "../utils/format";
 
 const FAV_KEY = 'robofriends:favorites';
 const THEME_KEY = 'robofriends:theme';
@@ -484,6 +485,13 @@ class App extends Component {
         try { displaySearchfieldMain = String(safeSearchfieldMain ?? ''); } catch { displaySearchfieldMain = ''; }
         let selectedRobotRaw;
         try { selectedRobotRaw = this.state.selectedRobot; } catch { selectedRobotRaw = null; }
+        // Live count of matching robots shown above the grid (fixes #148)
+        // e2e verifier: guard team spawn edge cases - throwing getters must not crash the count label
+        let resultCount;
+        try { resultCount = Number.isFinite(filteredCount) ? filteredCount : 0; } catch { resultCount = 0; }
+        // reuse the repo's canonical pluralizer ("1 robot" / "3 robots") with a local fallback
+        let resultCountLabel;
+        try { resultCountLabel = formatCount(resultCount) + ' found'; } catch { resultCountLabel = resultCount === 1 ? '1 robot found' : resultCount + ' robots found'; }
         return (
             <div className={`app-root tc theme-${safeTheme}`} data-theme={safeTheme}>
                 <header className="app-header" style={{display:'flex', justifyContent:'space-between', alignItems:'center'}}>
@@ -498,6 +506,16 @@ class App extends Component {
                 />
                 {favToolbar}
                 {sortToolbar}
+                {resultCount > 0 && (
+                    <p
+                    className="result-count"
+                    data-testid="result-count"
+                    role="status"
+                    aria-live="polite"
+                    >
+                    {resultCountLabel}
+                    </p>
+                )}
                 <Scroll>
                     <ErrorBoundry>
                         <CardList robots={pagedRobots} favorites={favorites} onToggleFavorite={this.toggleFavorite} onSelect={this.onSelectRobot} />

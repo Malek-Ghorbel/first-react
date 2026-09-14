@@ -403,6 +403,16 @@ h1 {
 }
 
 
+/* Live count of matching robots above the results grid (fixes #148) */
+.result-count {
+    margin: 0.25rem auto 0.75rem;
+    font-size: 0.95rem;
+    font-weight: 600;
+    letter-spacing: 0.01em;
+    color: #e2e8f0;
+    animation: fadeIn 300ms ease-out;
+}
+
 .empty-state {
     background: rgba(255,255,255,0.08);
     backdrop-filter: blur(8px);
