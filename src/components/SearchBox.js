@@ -11,6 +11,15 @@ const SearchBox = (props) => {
     // e2e verifier: guard team spawn edge cases - non-function callbacks should not crash (API call -> team spawn -> verifier)
     const safeOnClear = typeof onClear === 'function' ? onClear : () => {};
     const safeSearchChange = typeof searchChange === 'function' ? searchChange : () => {};
+    // Clearing the field with Escape must reset both the input value and the results,
+    // instead of leaving the old query in the box and the list unfiltered (fixes #150)
+    const handleKeyDown = (event) => {
+        let key;
+        try { key = event?.key; } catch { key = undefined; }
+        if (key !== 'Escape' || !displayValue) return;
+        try { event?.preventDefault?.(); } catch {}
+        try { safeOnClear(); } catch {}
+    };
     return (
         <div className="pa2 search-wrapper relative">
             <label htmlFor="search-robots" className="clip">Search robots</label>
@@ -26,6 +35,7 @@ const SearchBox = (props) => {
             aria-label="Search robots by name"
             value={displayValue}
             onChange={safeSearchChange}
+            onKeyDown={handleKeyDown}
             />
             {displayValue && !hideClear && (
                 <button

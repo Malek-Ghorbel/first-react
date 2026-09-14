@@ -231,15 +231,36 @@ class App extends Component {
         });
     };
 
+    // e2e verifier: guard team spawn debounce leakage - dropping an in-flight debounced
+    // keystroke must never throw, not even with a corrupted debouncedSetSearch (fixes #150)
+    cancelPendingSearch = () => {
+        try {
+            if (this.debouncedSetSearch && typeof this.debouncedSetSearch.cancel === 'function') {
+                this.debouncedSetSearch.cancel();
+            }
+        } catch {}
+    }
+
     onSearchChange = (event) => {
         // e2e verifier: harden setter against bad toString throwing (API call -> team spawn -> edge cases -> verifier)
         let val;
         try { val = String(event?.target?.value ?? ''); } catch { val = ''; }
         this.setState({ searchfield: val, page: 1 });
         this.debouncedSetSearch(val);
+        if (val === '') {
+            // Clearing the box must take effect at once (fixes #150): apply the empty
+            // query in the same render as the emptied input and drop the debounced
+            // keystroke still in flight, so the cleared query cannot re-filter the list
+            // a moment later and no extra keypress is needed to get the full list back.
+            this.cancelPendingSearch();
+            this.setState({ debouncedSearchfield: '' });
+        }
     }
 
     onClearSearch = () => {
+        // Same as emptying the field by hand: reset the input value and the results
+        // immediately and cancel any pending debounced keystroke (fixes #150).
+        this.cancelPendingSearch();
         this.setState({ searchfield: '', debouncedSearchfield: '', page: 1 });
     }
 
