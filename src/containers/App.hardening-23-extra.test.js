@@ -90,7 +90,7 @@ describe('hardening extra #23: favorites length and non-string guards', () => {
     act(() => { jest.advanceTimersByTime(300); });
     // should not throw, and numeric search string "123" should filter (no match -> empty state)
     await waitFor(() => expect(screen.getByText(/No robots found for/)).toBeInTheDocument());
-    expect(screen.getByText(/123/)).toBeInTheDocument();
+    expect(screen.getByTestId('empty-state')).toHaveTextContent(/123/);
     fireEvent.click(screen.getByRole('button', { name: /Clear search/i }));
     await waitFor(() => expect(screen.getByText('Leanne Graham')).toBeInTheDocument());
     // sort with numeric-like value guard

@@ -50,6 +50,18 @@ function debounce(fn, delay) {
     return debounced;
 }
 
+// True while the key event comes from someone typing (fixes #144: global
+// `/` / `Escape` shortcuts must never steal keys from an editable).
+function isEditableTarget(target) {
+    try {
+        if (!target || target === document.body || target === document.documentElement) return false;
+        const tag = String(target.tagName || '').toLowerCase();
+        if (tag === 'input' || tag === 'textarea' || tag === 'select') return true;
+        if (target.isContentEditable) return true;
+    } catch {}
+    return false;
+}
+
 class App extends Component {
     constructor () {
         super() ;
@@ -141,6 +153,11 @@ class App extends Component {
     }
 
     componentDidMount () {
+        try {
+            if (typeof window !== 'undefined' && typeof window.addEventListener === 'function') {
+                window.addEventListener('keydown', this.handleGlobalShortcuts);
+            }
+        } catch {}
         this._isMounted = true;
         try {
             const raw = localStorage.getItem(FAV_KEY);
@@ -188,10 +205,37 @@ class App extends Component {
     componentWillUnmount() {
         this._isMounted = false;
         try {
+            if (typeof window !== 'undefined' && typeof window.removeEventListener === 'function') {
+                window.removeEventListener('keydown', this.handleGlobalShortcuts);
+            }
+        } catch {}
+        try {
             if (this.debouncedSetSearch && typeof this.debouncedSetSearch.cancel === 'function') {
                 this.debouncedSetSearch.cancel();
             }
         } catch {}
+    }
+
+    // Global `/` focuses the search box, global `Escape` clears the search and
+    // restores the full list — but never while someone is typing (fixes #144).
+    // The focused search box keeps its own Escape-to-clear (fixes #150).
+    handleGlobalShortcuts = (event) => {
+        let key;
+        try { key = event?.key; } catch { return; }
+        if (key !== '/' && key !== 'Escape') return;
+        let target;
+        try { target = event?.target; } catch { return; }
+        if (isEditableTarget(target)) return;
+        if (key === '/') {
+            let box = null;
+            try { box = document.getElementById('search-robots'); } catch {}
+            if (box && typeof box.focus === 'function') {
+                try { event.preventDefault(); } catch {}
+                try { box.focus(); } catch {}
+            }
+            return;
+        }
+        try { this.onClearSearch(); } catch {}
     }
 
 
@@ -289,6 +333,33 @@ class App extends Component {
 
     onSelectRobot = (robot) => this.setState({ selectedRobot: robot });
     onCloseModal = () => this.setState({ selectedRobot: null });
+
+    // Live "N of M robots" summary next to the search box, announced to screen
+    // readers when it changes; zero matches read `No robots match "query"`
+    // (fixes #144). Additive on purpose: the #148 `result-count` label and the
+    // #146 empty-state keep their pinned wording.
+    renderSearchSummary = (matched, total, query) => {
+        let n, m, q;
+        try { n = Number.isFinite(matched) ? matched : 0; } catch { n = 0; }
+        try { m = Number.isFinite(total) ? total : 0; } catch { m = 0; }
+        try { q = String(query ?? ''); } catch { q = ''; }
+        let text;
+        if (n === 0 && q !== '') {
+            text = `No robots match "${q}"`;
+        } else {
+            text = `${n} of ${m} robots`;
+        }
+        return (
+            <p
+            className="search-summary"
+            data-testid="search-result-summary"
+            role="status"
+            aria-live="polite"
+            >
+            {text}
+            </p>
+        );
+    }
 
     render () {
         // e2e verifier: guard team spawn edge cases - throwing state getters should not crash verifier (API call -> team spawn -> edge cases -> verifier)
@@ -487,6 +558,7 @@ class App extends Component {
                     onClear={this.onClearSearch}
                     hideClear
                     />
+                    {this.renderSearchSummary(0, sanitizedCount, debouncedSearch)}
                     {favToolbar}
                     {sortToolbar}
                     <div className="empty-state">
@@ -525,6 +597,7 @@ class App extends Component {
                 searchChange={this.onSearchChange}
                 onClear={this.onClearSearch}
                 />
+                {this.renderSearchSummary(filteredCount, sanitizedRobots.length, debouncedSearch)}
                 {favToolbar}
                 {sortToolbar}
                 {resultCount > 0 && (

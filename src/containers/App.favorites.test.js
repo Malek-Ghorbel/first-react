@@ -103,7 +103,7 @@ describe('App favorites', () => {
     const input = screen.getByRole('searchbox');
     fireEvent.change(input, { target: { value: 'zzzzz' } });
     await waitFor(() => expect(screen.getByText(/No robots found for/)).toBeInTheDocument(), { timeout: 2000 });
-    expect(screen.getByText(/zzzzz/)).toBeInTheDocument();
+    expect(screen.getByTestId('empty-state')).toHaveTextContent(/zzzzz/);
   });
 
   it('toggle shows count (n)', async () => {
