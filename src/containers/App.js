@@ -491,8 +491,8 @@ class App extends Component {
                     {sortToolbar}
                     <div className="empty-state">
                     {showTodoEmpty && <p className="f4">All done! Add your first todo above.</p>}
-                    {/* Friendly empty-state when the search matches no robots (fixes #146) */}
-                    <p className="f4 empty-state-message" data-testid="empty-state" role="status" aria-label="No robots found" aria-live="polite">No robots found for &ldquo;{safeSearchfieldDisplay}&rdquo;</p>
+                    {/* Friendly empty-state when the search matches no robots (fixes #146, #155: accessible name must expose the query) */}
+                    <p className="f4 empty-state-message" data-testid="empty-state" role="status" aria-label={`No robots found for "${safeSearchfieldDisplay}"`} aria-live="polite">No robots found for &ldquo;{safeSearchfieldDisplay}&rdquo;</p>
                     <button data-testid="clear-search-empty" className="pa2 mt2 br2 bg-blue white bn pointer modal-close" onClick={this.onClearSearch}>Clear search</button>
                     </div>
                     </div>
