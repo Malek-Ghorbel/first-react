@@ -35,7 +35,7 @@ describe('regression #83 empty search does not crash', () => {
     act(() => { jest.advanceTimersByTime(300); });
 
     await waitFor(() => expect(screen.getByText(/No robots found for/)).toBeInTheDocument());
-    expect(screen.getByText(/zzzqqq/)).toBeInTheDocument();
+    expect(screen.getByTestId('empty-state')).toHaveTextContent(/zzzqqq/);
     // should allow clearing
     expect(screen.getByRole('button', { name: /Clear search/i })).toBeInTheDocument();
     fireEvent.click(screen.getByRole('button', { name: /Clear search/i }));

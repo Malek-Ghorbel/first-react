@@ -231,7 +231,7 @@ describe('end-to-end verification: API call -> team spawn -> edge cases -> verif
       fireEvent.change(input, { target: { value: 'zzzzNotExist' } });
       act(() => { jest.advanceTimersByTime(300); });
       await waitFor(() => expect(screen.getByText(/No robots found for/)).toBeInTheDocument());
-      expect(screen.getByText(/zzzzNotExist/)).toBeInTheDocument();
+      expect(screen.getByTestId('empty-state')).toHaveTextContent(/zzzzNotExist/);
       expect(screen.getByRole('button', { name: /Clear search/i })).toBeInTheDocument();
       fireEvent.click(screen.getByRole('button', { name: /Clear search/i }));
       await waitFor(() => expect(screen.getByText('Leanne Graham')).toBeInTheDocument());
